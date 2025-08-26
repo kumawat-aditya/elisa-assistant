@@ -1,0 +1,10 @@
+# pip install --upgrade pip setuptools wheel
+rasa
+wikipedia==1.4.0
+pynput
+simpleaudio
+TTS
+pytz
+pyyaml
+requests
+apscheduler

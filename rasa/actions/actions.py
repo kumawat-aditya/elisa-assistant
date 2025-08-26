@@ -2,20 +2,8 @@
 from rasa_sdk import Action, Tracker
 from rasa_sdk.executor import CollectingDispatcher
 from rasa_sdk.events import SlotSet
-import webbrowser
-import wikipedia
-import os
-from utils.app_launcher import open_application
-from utils.weather_info import fetch_weather, get_user_location
-from utils.reminder_manager import load_reminders, save_reminders, schedule_reminder, remove_reminder
-from utils.response_loader import get_random_response
-from datetime import datetime, timedelta, timezone
-import random
+from logic_integration import process
 from typing import Any, Text, Dict, List
-from pynput.keyboard import Controller
-import time
-import difflib
-
 
 class ActionOpenApp(Action):
     def name(self) -> str:
@@ -24,16 +12,12 @@ class ActionOpenApp(Action):
     def run(self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: dict) -> list:
         app_name = tracker.get_slot("app_name")
         
-        try:
-            if app_name:
-                # lowercase the app name to ensure consistency
-                result = open_application(app_name.lower())
-                dispatcher.utter_message(json_message={"text": result, "continue": False})
-            else:
-                dispatcher.utter_message(json_message={"text": "Please provide a valid application name.", "continue": False})
-        except Exception as e:
-            dispatcher.utter_message(json_message={"text": f"Failed to open {app_name}. Error: {str(e)}", "continue": False})
-        
+        if not app_name:
+            app_name = ""
+
+        response = process("OPEN_APP", app_name)
+        dispatcher.utter_message(json_message=response)
+
         return []
 
 class ActionSearchFirefox(Action):
@@ -51,46 +35,13 @@ class ActionSearchFirefox(Action):
         
         if entity_queries:
             query = " ".join(entity_queries).strip()
+            query = query.strip()
         
-        if query:
-            webbrowser.open(f"https://www.google.com/search?q={query}")
-            dispatcher.utter_message(json_message={"text": f"Searching for '{query}' on Firefox...", "continue": False})
-        else:
-            dispatcher.utter_message(json_message={"text": "I couldn't find a query to search for.", "continue": False})
+        if not query:
+            query = ""
         
-        return []
-
-class ActionCreateFile(Action):
-    def name(self) -> str:
-        return "action_create_file"
-
-    def run(self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: dict) -> list:
-        file_name = tracker.get_slot("file_name")
-         # directory = os.getcwd() # Old way
-        
-        # New way: use user's Documents folder
-        home_dir = os.path.expanduser("~")
-        documents_dir = os.path.join(home_dir, "Documents") # Common, but not guaranteed on all systems/languages
-        
-        # Create Documents directory if it doesn't exist (optional, good practice)
-        if not os.path.exists(documents_dir):
-            try:
-                os.makedirs(documents_dir)
-            except OSError as e:
-                # Fallback to current working directory if Documents can't be made
-                print(f"Warning: Could not create Documents directory ({e}). Using current directory.")
-                documents_dir = os.getcwd()
-        
-        directory_to_use = documents_dir
-        
-        if file_name:
-            file_path = os.path.join(directory_to_use, file_name)
-            try:
-                with open(file_path, 'w') as file:
-                    file.write(f"File '{file_name}' created by Elisa Assistant at {datetime.now()}.\n")
-                dispatcher.utter_message(json_message={"text": f"Created file: {file_name} in your Documents folder.", "continue": False})
-            except Exception as e:
-                dispatcher.utter_message(json_message={"text": f"Failed to create file: {file_name}. Error: {str(e)}", "continue": False})
+        response = process("SEARCH_BROWSER", query)
+        dispatcher.utter_message(json_message=response)
         
         return []
 
@@ -99,7 +50,6 @@ class ActionTypeWhatISay(Action):
         return "action_type_what_i_say"
 
     def run(self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
-        keyboard = Controller()
         text_to_type = next(tracker.get_latest_entity_values("text"), None)
 
         # Collect all text entities into a single text
@@ -110,20 +60,13 @@ class ActionTypeWhatISay(Action):
         
         if entity_queries:
             text_to_type = " ".join(entity_queries).strip()
+            text_to_type = text_to_type.strip()
+        
+        if not text_to_type:
+            text_to_type = ""
 
-        if text_to_type:
-            dispatcher.utter_message(json_message={"text": f"Typing: {text_to_type}", "continue": False})
-
-            # Simulate real typing effect
-            for char in text_to_type:
-                keyboard.type(char)
-                time.sleep(0.05)  # Adjust typing speed if needed
-            
-            keyboard.press("\n")  # Simulates pressing Enter after typing
-            keyboard.release("\n")
-
-        else:
-            dispatcher.utter_message(json_message={"text": "I didn't catch what you want me to type.", "continue": False})
+        response = process("TYPE_TEXT", text_to_type)
+        dispatcher.utter_message(json_message=response)
 
         return []
 
@@ -132,21 +75,10 @@ class ActionCurrentDateTime(Action):
         return "action_current_date_time"
 
     def run(self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: dict) -> list:
-        # Get current date and time in a friendly format
-        current_time = datetime.now().strftime("%A, %d %B %Y - %I:%M %p")
 
-        # Define multiple response variations
-        responses = [
-            f"The current date and time is {current_time}.",
-            f"Right now, it's {current_time}.",
-            f"As per my clock, it's {current_time}.",
-            f"Currently, it's {current_time}. Hope that helps!",
-            f"Time check! It's {current_time}.",
-            f"Hey! It's {current_time}. Anything else?"
-        ]
+        response = process("GET_CURRENT_TIME", "")
+        dispatcher.utter_message(json_message=response)
 
-        # Choose a random response
-        dispatcher.utter_message(json_message={"text": random.choice(responses), "continue": False})
         return []
 
 class ActionMeaningOf(Action):
@@ -156,27 +88,11 @@ class ActionMeaningOf(Action):
     def run(self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: dict) -> list:
         word = tracker.get_slot("words")
 
-        if word:
-            try:
-                # Fetch a short summary from Wikipedia
-                meaning = wikipedia.summary(word, sentences=1)
+        if not word:
+            word = ""
 
-                # Randomized response for the meaning
-                dispatcher.utter_message(json_message=get_random_response("action_meaning_of", "success", word=word, meaning=meaning))
-
-                # Ask if user wants to know more
-                dispatcher.utter_message(json_message=get_random_response("action_meaning_of", "offer_deep_dive"))
-
-                SlotSet("last_word", word)
-
-            except wikipedia.exceptions.DisambiguationError as e:
-                dispatcher.utter_message(json_message=get_random_response("action_meaning_of", "disambiguation"))
-            except wikipedia.exceptions.PageError:
-                dispatcher.utter_message(json_message=get_random_response("action_meaning_of", "not_found"))
-
-        else:
-            # Randomized response when the word is missing
-            dispatcher.utter_message(json_message=get_random_response("action_meaning_of", "missing_word"))
+        response = process("GET_MEANING", word)
+        dispatcher.utter_message(json_message=response)
 
         return []
 
@@ -185,14 +101,13 @@ class ActionOpenBrowser(Action):
         return "action_open_browser"
 
     def run(self, dispatcher: CollectingDispatcher, tracker: Tracker, domain: dict):
-        term = tracker.get_slot("words")
+        term = tracker.get_slot("words") # TODO may need to change to last_word
 
-        if term:
-            url = f"https://en.wikipedia.org/wiki/{term.replace(' ', '_')}"
-            webbrowser.open(url)
-            dispatcher.utter_message(json_message={"text": f"Opening more details about '{term}' in your browser.", "continue": False})
-        else:
-            dispatcher.utter_message(json_message={"text": "I don't remember which word you wanted. Could you say it again?", "continue": False})
+        if not term:
+            term = ""
+
+        response = process("OPEN_BROWSER", term)
+        dispatcher.utter_message(json_message=response)
 
         return []
 
@@ -210,20 +125,10 @@ class ActionWeatherUpdate(Action):
 
         # If location is not provided, get the user's current location
         if not location:
-            location = get_user_location()
-            if not location:
-                dispatcher.utter_message(text="I couldn't detect your location. Please provide a city name.")
-                return []
+            location = ""
 
-        # Fetch weather details
-        weather_data = fetch_weather(location)
-
-        if weather_data:
-            temp = weather_data["main"]["temp"]
-            condition = weather_data["weather"][0]["description"]
-            dispatcher.utter_message(text=f"The current weather in {location} is {condition} with a temperature of {temp}°C.")
-        else:
-            dispatcher.utter_message(text=f"Sorry, I couldn't fetch the weather for {location}. Please try again later.")
+        response = process("GET_WEATHER", location)
+        dispatcher.utter_message(json_message=response)
 
         return []
     
@@ -239,28 +144,13 @@ class ActionSetReminder(Action):
         time_value = tracker.get_slot("time") or next(tracker.get_latest_entity_values("time"), None)
 
         if not task or not time_value:
-            dispatcher.utter_message(text="I need both the task and the time for the reminder.")
-            return []
+            task = time_value = ""
+            response = process("SET_REMINDER", "")
+        else:
+            response = process("SET_REMINDER", f"{task}||{time_value}")
 
-        try:
-            reminder_time = datetime.fromisoformat(time_value)
-        except Exception as e:
-            print(f"[Reminder Parse Error] Couldn't parse time: {time_value}, error: {e}")
-            dispatcher.utter_message(text="I couldn't understand the time you mentioned. Try saying 'remind me at 5pm'.")
-            return []
+        dispatcher.utter_message(json_message=response)
 
-        reminders = load_reminders()
-        reminders[task] = reminder_time.isoformat()
-        save_reminders(reminders)
-
-        # Schedule reminders
-        ten_minutes_before = reminder_time - timedelta(minutes=10)
-        schedule_reminder(task, ten_minutes_before.isoformat(), early=True)
-        schedule_reminder(task, reminder_time.isoformat(), early=False)
-
-        dispatcher.utter_message(
-            text=f"✅ Reminder set for '{task}' at {reminder_time.strftime('%I:%M %p')}."
-        )
         return []
 
 class ActionListReminders(Action):
@@ -271,38 +161,9 @@ class ActionListReminders(Action):
             tracker: Tracker,
             domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
 
-        now = datetime.now(timezone.utc)  # make `now` timezone-aware in UTC
-        reminders = load_reminders()
-        active_reminders = {}
+        response = process("LIST_REMINDERS", "")
+        dispatcher.utter_message(json_message=response)
 
-        for task, time_str in reminders.items():
-            try:
-                reminder_time = datetime.fromisoformat(time_str)
-
-                # Ensure both are timezone-aware
-                if reminder_time.tzinfo is None:
-                    reminder_time = reminder_time.replace(tzinfo=timezone.utc)
-
-                if reminder_time > now:
-                    active_reminders[task] = time_str
-            except Exception as e:
-                print(f"[Reminder Check] Failed to parse time for {task}: {e}")
-
-
-        # Overwrite with filtered active ones
-        save_reminders(active_reminders)
-
-        if not active_reminders:
-            dispatcher.utter_message(text="You don't have any active reminders.")
-            return []
-
-        message = "Here are your current reminders:\n"
-        for task, time in active_reminders.items():
-            formatted_time = datetime.fromisoformat(time).strftime('%I:%M %p')
-            message += f"• {task} at {formatted_time}\n"
-
-        dispatcher.utter_message(text=message)
-        dispatcher.utter_message(text="Would you like to update the time for a task or remove one?")
         return []
 
 class ActionRemoveReminder(Action):
@@ -314,29 +175,13 @@ class ActionRemoveReminder(Action):
             domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
 
         task = next(tracker.get_latest_entity_values("task_name"), None)
-        reminders = load_reminders()
 
-        if not reminders:
-            dispatcher.utter_message(text="You don't have any reminders set.")
-            return []
-
-        task_names = list(reminders.keys())
-        best_match = difflib.get_close_matches(task, task_names, n=1, cutoff=0.5)
-
-        if best_match:
-            matched_task = best_match[0]
-
-            # ❌ Remove from reminder list
-            reminders.pop(matched_task)
-            save_reminders(reminders)
-
-            # ❌ Remove scheduled jobs
-            remove_reminder(matched_task)
-
-            dispatcher.utter_message(text=f"✅ Removed the reminder for '{matched_task}'.")
-        else:
-            dispatcher.utter_message(text="❌ Couldn't find any matching reminder.")
-
+        if not task:
+            task = ""
+        
+        response = process("REMOVE_REMINDER", task)
+        dispatcher.utter_message(json_message=response)
+        
         return []
 
 class ActionUpdateReminder(Action):
@@ -350,38 +195,15 @@ class ActionUpdateReminder(Action):
         task = next(tracker.get_latest_entity_values("task_name"), None)
         new_time = tracker.get_slot("time")
 
-        reminders = load_reminders()
 
         if not task or not new_time:
+            task = new_time = ""
+            response = process("UPDATE_REMINDER", "")
             dispatcher.utter_message(text="Please specify both the task and the new time.")
             return []
+        else: 
+            response = process("UPDATE_REMINDER", f"{task}||{new_time}")
+            
+        dispatcher.utter_message(json_message=response)
 
-        # 🔍 Fuzzy match task
-        task_names = list(reminders.keys())
-        best_match = difflib.get_close_matches(task, task_names, n=1, cutoff=0.5)
-
-        if not best_match:
-            dispatcher.utter_message(text="Couldn't find a matching reminder to update.")
-            return []
-
-        matched_task = best_match[0]
-
-        try:
-            updated_time = datetime.fromisoformat(new_time)
-        except Exception:
-            # updated_time = datetime.now() + timedelta(minutes=30)
-            dispatcher.utter_message(text="Couldn't understand the new time. Please try again.")
-            return []
-
-        # 🔁 Update in the reminder JSON
-        reminders[matched_task] = updated_time.isoformat()
-        save_reminders(reminders)
-
-        # 📆 Re-schedule the reminder with dual notifications
-        schedule_reminder(matched_task, (updated_time - timedelta(minutes=10)).isoformat(), early=True)
-        schedule_reminder(matched_task, updated_time.isoformat(), early=False)
-
-        dispatcher.utter_message(
-            text=f"🕒 Reminder for '{matched_task}' updated to {updated_time.strftime('%Y-%m-%d %H:%M')}."
-        )
         return []

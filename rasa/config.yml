@@ -51,7 +51,7 @@ pipeline:
   - name: EntitySynonymMapper
 
   - name: DucklingEntityExtractor
-    url: http://localhost:8000
+    url: http://localhost:8022
     dimensions: ["time", "duration"]
     locale: "en_US"
     timezone: "Asia/Kolkata"

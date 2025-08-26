@@ -1,0 +1,20 @@
+# inside duckling dir
+git clone https://github.com/facebook/duckling.git
+cd duckling
+docker run -p 8022:8000 rasa/duckling
+
+# inside rasa dir
+yay -S pyenv pyenv-virtualenv
+Python 3.9.18
+pyenv activate rasa-env
+
+# inside rasa-env
+pip install rasa
+pip install rasa[spacy]
+pip install spacy
+pip install rasa[transformers]   # optional, but helps for DIETClassifier
+python -m spacy download en_core_web_md
+
+rasa train
+rasa run actions
+rasa run
