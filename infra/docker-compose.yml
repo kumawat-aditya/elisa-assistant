@@ -1,0 +1,54 @@
+version: "3.8"
+
+services:
+  # ============================================================================
+  # Text-to-Speech Service (Coqui TTS)
+  # ============================================================================
+  tts:
+    image: ghcr.io/coqui-ai/tts-cpu:v0.22.0
+    container_name: elisa-tts
+    ports:
+      - "5002:5002"
+    entrypoint: /bin/bash
+    command: -c "python3 TTS/server/server.py --model_name tts_models/en/ljspeech/glow-tts"
+    restart: unless-stopped
+    networks:
+      - elisa-network
+
+  # ============================================================================
+  # Duckling Service (Entity Extraction for dates/times)
+  # ============================================================================
+  duckling:
+    image: rasa/duckling:0.2.0.2-r3
+    container_name: elisa-duckling
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    networks:
+      - elisa-network
+
+networks:
+  elisa-network:
+    driver: bridge
+
+# ============================================================================
+# GPU-enabled TTS (uncomment to use)
+# ============================================================================
+# services:
+#   tts-gpu:
+#     image: ghcr.io/coqui-ai/tts:v0.22.0
+#     container_name: elisa-tts-gpu
+#     ports:
+#       - "5002:5002"
+#     entrypoint: /bin/bash
+#     command: -c "python3 TTS/server/server.py --model_name tts_models/en/ljspeech/glow-tts --use_cuda true"
+#     deploy:
+#       resources:
+#         reservations:
+#           devices:
+#             - driver: nvidia
+#               count: 1
+#               capabilities: [gpu]
+#     restart: unless-stopped
+#     networks:
+#       - elisa-network

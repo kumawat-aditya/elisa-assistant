@@ -2,10 +2,8 @@
 # Python
 __pycache__/
 .vscode/
-.venv/
-venv/
 # Rasa
-.rasa/
+rasa_env/
 # Tests
 tests/
 response.wav
