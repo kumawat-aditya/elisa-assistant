@@ -1,15 +1,10 @@
-# ignoring venv, .rasa, .vscode, __pycache__, tests
-# Python
-__pycache__/
-.vscode/
-# Rasa
-rasa_env/
-# Tests
-tests/
-response.wav
-whisper.cpp/
-whisper.cpp
-reminder_jobs.sqlite
-models/
-**.log
-/audio/temporary/
+
+.vscode
+
+app_env
+logic_env
+nlu_env
+
+stt/whisper.cpp
+
+nlu/.rasa

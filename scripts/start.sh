@@ -89,10 +89,12 @@ log_step "Starting Logic Layer (FastAPI on port 8021)..."
 
 cd "$PROJECT_ROOT/logic/src"
 
-# Activate logic environment if available
-if command -v pyenv &>/dev/null; then
-    eval "$(pyenv init -)"
-    pyenv activate logic-env 2>/dev/null || true
+# Activate logic_env virtual environment
+if [ -f "$PROJECT_ROOT/logic_env/bin/activate" ]; then
+    source "$PROJECT_ROOT/logic_env/bin/activate"
+    log_info "Activated logic_env"
+else
+    log_warn "logic_env not found - using system Python"
 fi
 
 uvicorn main:app --host 0.0.0.0 --port 8021 > "$PROJECT_ROOT/logs/logic.log" 2>&1 &
@@ -108,9 +110,12 @@ log_step "Starting NLU Server (Rasa on port 5005)..."
 
 cd "$PROJECT_ROOT/nlu"
 
-# Activate rasa environment if available
-if [ -f "$PROJECT_ROOT/rasa_env/bin/activate" ]; then
-    source "$PROJECT_ROOT/rasa_env/bin/activate"
+# Activate nlu_env virtual environment
+if [ -f "$PROJECT_ROOT/nlu_env/bin/activate" ]; then
+    source "$PROJECT_ROOT/nlu_env/bin/activate"
+    log_info "Activated nlu_env"
+else
+    log_warn "nlu_env not found - using system Python"
 fi
 
 rasa run --enable-api --cors "*" > "$PROJECT_ROOT/logs/nlu_server.log" 2>&1 &
@@ -170,10 +175,12 @@ log_step "Starting Main Assistant..."
 
 cd "$PROJECT_ROOT/assistant/src"
 
-# Activate app environment if available
-if command -v pyenv &>/dev/null; then
-    eval "$(pyenv init -)"
-    pyenv activate app-env 2>/dev/null || true
+# Activate app_env virtual environment
+if [ -f "$PROJECT_ROOT/app_env/bin/activate" ]; then
+    source "$PROJECT_ROOT/app_env/bin/activate"
+    log_info "Activated app_env"
+else
+    log_warn "app_env not found - using system Python"
 fi
 
 python main.py

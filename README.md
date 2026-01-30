@@ -1,153 +1,148 @@
-# ELISA - Electronic Linguistic Intelligent Software Assistant
+# ELISA
 
 <div align="center">
 
-[![Python](https://img.shields.io/badge/Python-3.9+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
-[![Rasa](https://img.shields.io/badge/Rasa-3.x-5A17EE?style=for-the-badge&logo=rasa&logoColor=white)](https://rasa.com)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
-[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docker.com)
-[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE.txt)
+[![Python](https://img.shields.io/badge/Python-3.9+-3776AB?logo=python\&logoColor=white)](https://python.org)
+[![Rasa](https://img.shields.io/badge/Rasa-3.x-5A17EE?logo=rasa\&logoColor=white)](https://rasa.com)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?logo=fastapi\&logoColor=white)](https://fastapi.tiangolo.com)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker\&logoColor=white)](https://docker.com)
+[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE.txt)
 
-**A modular, privacy-focused voice assistant with microservices architecture**
+**Modular, local-first voice assistant built with Rasa, FastAPI, and Whisper**
 
-[Features](#-features) • [Architecture](#-architecture) • [Quick Start](#-quick-start) • [Documentation](#-documentation)
+[Features](#-features) • [Architecture](#-architecture) • [Project Structure](#-project-structure) • [Quick Start](#-quick-start) • [Development](#-development)
 
 </div>
 
 ---
 
-## ✨ Features
+## Overview
 
-| Category               | Capabilities                                                       |
-| ---------------------- | ------------------------------------------------------------------ |
-| **🗣️ Voice Interface** | Wake word detection, VAD-based recording, natural speech synthesis |
-| **🧠 NLU**             | Intent recognition, entity extraction, multi-turn dialogue         |
-| **🖥️ Desktop Control** | Open apps, web search, dictation, date/time queries                |
-| **⏰ Reminders**       | Set, list, update, remove with notifications                       |
-| **🌤️ Information**     | Weather updates, word definitions (Wikipedia)                      |
-| **🌐 Web UI**          | Real-time status, WebSocket communication                          |
+ELISA is a self-hosted voice assistant designed with clear separation of concerns across runtime orchestration, NLU processing, and business logic.
+
+The system is structured as independent services communicating over HTTP and WebSocket, making it easier to maintain, extend, and debug.
+
+Core principles:
+
+* Modular architecture
+* Local processing (no cloud dependency required)
+* Clear service boundaries
+* Reproducible setup with Docker
 
 ---
 
-## 🏗️ Architecture
+# ✨ Features
 
-ELISA uses a **microservices architecture** with clear separation of concerns:
+| Layer                     | Capabilities                                                                   |
+| ------------------------- | ------------------------------------------------------------------------------ |
+| **Voice Interface**       | Wake word detection, VAD-based recording, Whisper speech-to-text, TTS playback |
+| **NLU (Rasa)**            | Intent recognition, entity extraction, dialogue management                     |
+| **Logic Layer (FastAPI)** | App launcher, reminders, weather, search, definitions                          |
+| **Scheduler**             | Persistent reminders using APScheduler                                         |
+| **Web UI**                | Real-time status via WebSocket                                                 |
+| **Entity Parsing**        | Duckling for time/date recognition                                             |
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                              ELISA ARCHITECTURE                             │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐   │
-│  │  TTS Docker  │  │   Duckling   │  │   Web UI     │  │   Whisper    │   │
-│  │  Port 5002   │  │  Port 8000   │  │  Port 35109  │  │   (local)    │   │
-│  └──────▲───────┘  └──────▲───────┘  └──────▲───────┘  └──────▲───────┘   │
-│         │                 │                 │                 │            │
-│  ───────┴─────────────────┴─────────────────┴─────────────────┴─────────   │
-│                                                                             │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │                        ASSISTANT LAYER                              │   │
-│  │  assistant/src/                                                     │   │
-│  │      ├── main.py          ← Entry point & orchestrator              │   │
-│  │      ├── wake_word/       ← OpenWakeWord detection                  │   │
-│  │      ├── stt/             ← Whisper.cpp integration                 │   │
-│  │      ├── tts/             ← TTS Docker client                       │   │
-│  │      ├── nlu_client/      ← Rasa HTTP client                        │   │
-│  │      └── session/         ← WebSocket for UI                        │   │
-│  └───────────────────────────────────┬─────────────────────────────────┘   │
-│                                      │                                      │
-│  ────────────────────────────────────┼──────────────────────────────────   │
-│                                      ▼                                      │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │                          NLU LAYER (Port 5005)                      │   │
-│  │  nlu/                                                                │   │
-│  │      ├── Rasa Server      ← Intent & entity recognition             │   │
-│  │      ├── actions/         ← Custom actions → Logic Layer            │   │
-│  │      ├── data/            ← Training data (nlu.yml, stories.yml)    │   │
-│  │      └── models/          ← Trained NLU models                      │   │
-│  └───────────────────────────────────┬─────────────────────────────────┘   │
-│                                      │                                      │
-│  ────────────────────────────────────┼──────────────────────────────────   │
-│                                      ▼                                      │
-│  ┌─────────────────────────────────────────────────────────────────────┐   │
-│  │                        LOGIC LAYER (Port 8021)                      │   │
-│  │  logic/src/                                                          │   │
-│  │      ├── main.py          ← FastAPI entry point                     │   │
-│  │      ├── routes/          ← Action routing (logic.py)               │   │
-│  │      ├── services/        ← Business logic modules                  │   │
-│  │      ├── scheduler/       ← APScheduler for reminders               │   │
-│  │      └── data/            ← Responses, reminder storage             │   │
-│  └─────────────────────────────────────────────────────────────────────┘   │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+---
 
-### Data Flow
+# 🏗️ Architecture
+
+ELISA follows a **multi-service layered architecture**:
 
 ```
-User Voice → Wake Word → STT (Whisper) → NLU (Rasa) → Logic (FastAPI) → Response → TTS → Audio Output
+User Voice
+    ↓
+Wake Word Detection
+    ↓
+Speech-to-Text (Whisper.cpp)
+    ↓
+NLU Server (Rasa - Port 5005)
+    ↓
+Logic API (FastAPI - Port 8021)
+    ↓
+Text-to-Speech (Docker - Port 5002)
+    ↓
+Audio Output
 ```
 
 ---
 
-## 📁 Project Structure
+## Service Responsibilities
+
+### 1️⃣ Assistant Layer (`assistant/`)
+
+* Main runtime entry point
+* Wake word detection
+* Audio recording
+* STT integration
+* Rasa API client
+* WebSocket communication with UI
+
+### 2️⃣ NLU Layer (`nlu/`)
+
+* Intent classification
+* Entity extraction
+* Dialogue handling
+* Custom actions
+* Duckling integration
+
+### 3️⃣ Logic Layer (`logic/`)
+
+* Business logic modules
+* Reminder scheduling
+* Desktop control
+* External API integrations
+* Response formatting
+
+---
+
+# 📁 Project Structure
 
 ```
 elisa-assistant/
 │
-├── assistant/                 # Main runtime (voice interface)
+├── assistant/                 # Runtime orchestration
 │   ├── src/
-│   │   ├── main.py           # Entry point & orchestrator
-│   │   ├── wake_word/        # Wake word detection
-│   │   ├── stt/              # Speech-to-text (Whisper)
-│   │   ├── tts/              # Text-to-speech client
-│   │   ├── nlu_client/       # Rasa integration
-│   │   └── session/          # WebSocket for UI
+│   │   ├── main.py
+│   │   ├── wake_word/
+│   │   ├── stt/
+│   │   ├── tts/
+│   │   ├── nlu_client/
+│   │   └── session/
 │   ├── tests/
 │   └── requirements.txt
 │
-├── logic/                     # Business logic (FastAPI)
+├── logic/                     # FastAPI business logic
 │   ├── src/
-│   │   ├── main.py           # FastAPI server
-│   │   ├── routes/           # Action routing
-│   │   ├── services/         # App launcher, weather, reminders
-│   │   ├── scheduler/        # APScheduler
-│   │   └── data/             # Responses, reminder storage
+│   │   ├── main.py
+│   │   ├── routes/
+│   │   ├── services/
+│   │   ├── scheduler/
+│   │   └── data/
 │   ├── tests/
 │   └── requirements.txt
 │
-├── nlu/                       # NLU layer (Rasa)
-│   ├── actions/              # Custom Rasa actions
-│   ├── data/                 # Training data
-│   ├── models/               # Trained models
+├── nlu/                       # Rasa NLU
+│   ├── actions/
+│   ├── data/
+│   ├── models/
 │   ├── config.yml
 │   ├── domain.yml
 │   └── requirements.txt
 │
-├── stt/                       # Speech-to-text (Whisper.cpp)
-│   ├── whisper.cpp/          # Whisper source/binary
-│   └── models/               # Whisper models
+├── stt/                       # Whisper.cpp integration
 │
 ├── ui/                        # Web interface
-│   ├── public/               # HTML, images
-│   └── src/                  # CSS, JavaScript
 │
-├── shared/                    # Shared resources
+├── shared/
 │   └── audio/
-│       ├── permanent/        # Boot, beep, notification sounds
-│       └── temporary/        # Runtime recordings
-│
-├── config/
-│   └── .env.example
 │
 ├── infra/
-│   └── docker-compose.yml    # TTS & Duckling services
+│   └── docker-compose.yml
 │
 ├── scripts/
-│   └── start.sh              # Startup script
-│
-├── docs/                      # Documentation
-├── logs/                      # Runtime logs (gitignored)
+├── docs/
+├── logs/                      # gitignored
+├── config/
 │
 ├── README.md
 └── LICENSE.txt
@@ -155,153 +150,201 @@ elisa-assistant/
 
 ---
 
-## 🚀 Quick Start
+# 🚀 Quick Start
 
-### Prerequisites
+## Prerequisites
 
-- **Python 3.9+** (pyenv recommended)
-- **Docker & Docker Compose**
-- **CMake & C++ compiler** (for Whisper.cpp)
-- **PortAudio** (`sudo pacman -S portaudio` / `sudo apt install portaudio19-dev`)
+* Python 3.9+
+* Docker & Docker Compose
+* CMake + C++ compiler
+* PortAudio
 
-### Installation
+Linux example:
 
 ```bash
-# 1. Clone the repository
+sudo apt install portaudio19-dev
+```
+
+---
+
+## Installation
+
+### 1. Clone
+
+```bash
 git clone https://github.com/Adikumaw/elisa-assistant.git
 cd elisa-assistant
+```
 
-# 2. Start Docker services (TTS & Duckling)
-cd infra && docker-compose up -d && cd ..
+---
 
-# 3. Setup NLU (Rasa)
-python3.9 -m venv nlu_env
+### 2. Start Infrastructure Services
+
+```bash
+cd infra
+docker-compose up -d
+cd ..
+```
+
+---
+
+### 3. Setup NLU
+
+```bash
+python3 -m venv nlu_env
 source nlu_env/bin/activate
 pip install -r nlu/requirements.txt
 python -m spacy download en_core_web_md
 cd nlu && rasa train && cd ..
 deactivate
+```
 
-# 4. Setup Logic Layer
-pyenv virtualenv 3.10.12 logic-env
-pyenv activate logic-env
+---
+
+### 4. Setup Logic Layer
+
+```bash
+python3 -m venv logic_env
+source logic_env/bin/activate
 pip install -r logic/requirements.txt
-pyenv deactivate
+deactivate
+```
 
-# 5. Setup Assistant
-pyenv virtualenv 3.10.12 app-env
-pyenv activate app-env
+---
+
+### 5. Setup Assistant
+
+```bash
+python3 -m venv app_env
+source app_env/bin/activate
 pip install -r assistant/requirements.txt
-pyenv deactivate
+deactivate
+```
 
-# 6. Build Whisper.cpp
-cd stt/whisper.cpp
+---
+
+### 6. Build Whisper.cpp
+
+```bash
+cd stt
+git clone https://github.com/ggerganov/whisper.cpp.git
+cd whisper.cpp
 sh ./models/download-ggml-model.sh medium.en
-cmake -B build && cmake --build build -j$(nproc)
+cmake -B build
+cmake --build build -j$(nproc)
 cd ../..
-
-# 7. Run ELISA
-./scripts/start.sh
 ```
 
-### Quick Run (After Setup)
+---
+
+### 7. Run
 
 ```bash
 ./scripts/start.sh
 ```
 
-Access the Web UI at: **http://localhost:35109**
+Web UI:
 
----
-
-## 🐳 Docker Services
-
-| Service  | Image                              | Port | Purpose                     |
-| -------- | ---------------------------------- | ---- | --------------------------- |
-| TTS      | `ghcr.io/coqui-ai/tts-cpu:v0.22.0` | 5002 | Text-to-Speech              |
-| Duckling | `rasa/duckling:0.2.0.2-r3`         | 8000 | Date/Time entity extraction |
-
-```bash
-# Start services
-cd infra && docker-compose up -d
-
-# Stop services
-cd infra && docker-compose down
-
-# View logs
-docker-compose logs -f
+```
+http://localhost:35109
 ```
 
 ---
 
-## 📜 Supported Commands
+# 🐳 Docker Services
 
-| Category        | Examples                                              |
-| --------------- | ----------------------------------------------------- |
-| **Greetings**   | "Hello", "Hi Elisa", "Good morning"                   |
-| **Time/Date**   | "What time is it?", "What's the date?"                |
-| **Apps**        | "Open Firefox", "Launch VS Code"                      |
-| **Search**      | "Search for Python tutorials"                         |
-| **Dictation**   | "Type what I say Hello world"                         |
-| **Definitions** | "What is the meaning of serendipity?"                 |
-| **Weather**     | "What's the weather like?", "Weather in London"       |
-| **Reminders**   | "Remind me to call John at 5 PM", "List my reminders" |
+| Service  | Purpose                  | Port |
+| -------- | ------------------------ | ---- |
+| TTS      | Speech synthesis         | 5002 |
+| Duckling | Date/time entity parsing | 8000 |
+
+Start / Stop:
+
+```bash
+docker-compose up -d
+docker-compose down
+```
 
 ---
 
-## 🛠️ Development
+# 📜 Supported Commands
 
-### Running Individual Services
+* Greetings
+* Time / Date queries
+* App launching
+* Web search
+* Dictation
+* Word definitions
+* Weather queries
+* Reminder creation / listing
+
+---
+
+# 🛠 Development
+
+## Run Services Individually
+
+Logic API:
 
 ```bash
-# Logic Layer
-cd logic/src && uvicorn main:app --host 0.0.0.0 --port 8021 --reload
-
-# NLU Server
-cd nlu && rasa run --enable-api --cors "*"
-
-# NLU Actions
-cd nlu && rasa run actions
-
-# Web UI
-python -m http.server 35109 --directory ui/public
-
-# Assistant
-cd assistant/src && python main.py
+cd logic/src
+uvicorn main:app --reload --port 8021
 ```
 
-### Training NLU
+NLU Server:
+
+```bash
+cd nlu
+rasa run --enable-api --cors "*"
+```
+
+NLU Actions:
+
+```bash
+rasa run actions
+```
+
+Assistant:
+
+```bash
+cd assistant/src
+python main.py
+```
+
+---
+
+## Training NLU
 
 ```bash
 cd nlu
 rasa train
-rasa shell  # Interactive testing
+rasa shell
 ```
 
 ---
 
-## 📚 Documentation
+# 📚 Documentation
 
-- [Setup Guide](docs/setup.txt) - Detailed installation instructions
-- [Docker Reference](docs/docker_how_to.txt) - Docker commands
-- [Virtual Environment](docs/venv_how_to.txt) - pyenv/venv setup
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+* `docs/setup.txt`
+* `docs/docker_how_to.txt`
+* `docs/venv_how_to.txt`
 
 ---
 
-## 📝 License
+# 🤝 Contributing
 
-This project is licensed under the [MIT License](LICENSE.txt).
+Contributions are welcome. Please open an issue before major changes.
+
+---
+
+# 📝 License
+
+MIT License
 
 ---
 
 <div align="center">
 
-**Built with ❤️ by [Adikumaw](https://github.com/Adikumaw)**
+Built by Aditya Kumawat
 
 </div>
