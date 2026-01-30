@@ -8,3 +8,5 @@ nlu_env
 stt/whisper.cpp
 
 nlu/.rasa
+
+*.pyc

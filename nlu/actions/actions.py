@@ -2,7 +2,7 @@
 from rasa_sdk import Action, Tracker
 from rasa_sdk.executor import CollectingDispatcher
 from rasa_sdk.events import SlotSet
-from logic_integration import process
+from .logic_integration import process
 from typing import Any, Text, Dict, List
 
 class ActionOpenApp(Action):
