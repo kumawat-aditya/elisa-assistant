@@ -3,10 +3,25 @@ import wave
 import webrtcvad
 import collections
 import subprocess
-import simpleaudio as sa
 import uuid
 import os
 import sys
+import time
+import numpy as np
+
+# Try to import sounddevice for PipeWire/PulseAudio compatible playback
+try:
+    import sounddevice as sd
+    SOUNDDEVICE_AVAILABLE = True
+except ImportError:
+    SOUNDDEVICE_AVAILABLE = False
+
+# Fallback to simpleaudio
+try:
+    import simpleaudio as sa
+    SIMPLEAUDIO_AVAILABLE = True
+except ImportError:
+    SIMPLEAUDIO_AVAILABLE = False
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -40,13 +55,112 @@ os.makedirs(AUDIO_TEMP_DIR, exist_ok=True)
 def debug(msg):
     print(f"🔍 DEBUG: {msg}")
 
+# === FIND WORKING INPUT DEVICE ===
+def find_working_input_device(p):
+    """Find an input device that supports the required sample rate."""
+    # First try to find a device that explicitly supports our sample rate
+    for i in range(p.get_device_count()):
+        try:
+            info = p.get_device_info_by_index(i)
+            if info.get("maxInputChannels", 0) > 0:
+                # Try to check if format is supported
+                if p.is_format_supported(
+                    rate=float(RATE),
+                    input_device=i,
+                    input_channels=CHANNELS,
+                    input_format=FORMAT
+                ):
+                    return i
+        except (ValueError, OSError):
+            continue
+    
+    # Fallback: try each input device by actually opening a stream
+    for i in range(p.get_device_count()):
+        try:
+            info = p.get_device_info_by_index(i)
+            if info.get("maxInputChannels", 0) > 0:
+                # Try to open a test stream
+                test_stream = p.open(
+                    format=FORMAT,
+                    channels=CHANNELS,
+                    rate=RATE,
+                    input=True,
+                    input_device_index=i,
+                    frames_per_buffer=CHUNK,
+                    start=False
+                )
+                test_stream.close()
+                return i
+        except (ValueError, OSError):
+            continue
+    
+    return None  # Will use default
+
+# === PLAY WAV FILE (PipeWire/PulseAudio compatible) ===
+def play_wav_file(filepath):
+    """Play a WAV file using the best available method for the system."""
+    
+    # Method 1: Try paplay (PulseAudio/PipeWire command line) - MOST RELIABLE on modern Linux
+    try:
+        result = subprocess.run(['paplay', filepath], capture_output=True, timeout=30)
+        if result.returncode == 0:
+            return True
+    except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
+        pass
+    
+    # Method 2: Try pw-play (PipeWire command line)
+    try:
+        result = subprocess.run(['pw-play', filepath], capture_output=True, timeout=30)
+        if result.returncode == 0:
+            return True
+    except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
+        pass
+    
+    # Method 3: Try sounddevice (works with PipeWire/PulseAudio)
+    if SOUNDDEVICE_AVAILABLE:
+        try:
+            with wave.open(filepath, 'rb') as wf:
+                sample_rate = wf.getframerate()
+                n_channels = wf.getnchannels()
+                n_frames = wf.getnframes()
+                audio_data = wf.readframes(n_frames)
+                
+                # Convert to numpy array
+                dtype = np.int16
+                audio_array = np.frombuffer(audio_data, dtype=dtype)
+                
+                if n_channels > 1:
+                    audio_array = audio_array.reshape(-1, n_channels)
+                
+                sd.play(audio_array, sample_rate)
+                sd.wait()
+                return True
+        except Exception as e:
+            pass
+    
+    # Method 4: Try aplay (ALSA)
+    try:
+        result = subprocess.run(['aplay', '-q', filepath], capture_output=True, timeout=30)
+        if result.returncode == 0:
+            return True
+    except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
+        pass
+    
+    # Method 5: Try simpleaudio as last resort
+    if SIMPLEAUDIO_AVAILABLE:
+        try:
+            sa.WaveObject.from_wave_file(filepath).play().wait_done()
+            return True
+        except Exception:
+            pass
+    
+    return False
+
 # === PLAY BEEP SOUND ===
 def play_beep(path=BEEP_PATH):
     debug("Playing beep sound")
-    try:
-        sa.WaveObject.from_wave_file(path).play().wait_done()
-    except Exception as e:
-        print(f"⚠️ Beep sound failed: {e}")
+    if not play_wav_file(path):
+        print(f"⚠️ Beep sound failed: No audio playback method available")
 
 # === RECORD AUDIO USING VAD ===
 def vad_record(audio_temp_path):
@@ -54,10 +168,20 @@ def vad_record(audio_temp_path):
     vad = webrtcvad.Vad(VAD_AGGRESSIVENESS)
     p = pyaudio.PyAudio()
 
+    # Find a working input device
+    device_index = find_working_input_device(p)
+    
+    if device_index is not None:
+        device_info = p.get_device_info_by_index(device_index)
+        debug(f"Using audio device [{device_index}]: {device_info['name']}")
+    else:
+        debug("Using default audio device")
+
     stream = p.open(format=FORMAT,
                     channels=CHANNELS,
                     rate=RATE,
                     input=True,
+                    input_device_index=device_index,
                     frames_per_buffer=CHUNK)
 
     frames = []

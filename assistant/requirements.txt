@@ -4,6 +4,7 @@ PyAudio==0.2.14
 simpleaudio==1.0.4
 webrtcvad==2.0.10
 numpy==1.26.4
+sounddevice>=0.4.6  # PipeWire/PulseAudio compatible audio playback
 
 # Wake word detection
 openwakeword==0.6.0
