@@ -1,34 +1,27 @@
 
-# Core web framework
-fastapi==0.116.1
-uvicorn==0.35.0
+# =============================================================================
+# ELISA Logic Layer - Requirements
+# =============================================================================
+# FastAPI-based logic processing service
 
-# Data validation
-pydantic==2.11.7
+# Web Framework
+fastapi>=0.100.0             # Modern async web framework
+uvicorn>=0.23.0              # ASGI server for FastAPI
 
-# Scheduling
-APScheduler==3.11.0
-SQLAlchemy==2.0.43
-pytz==2025.2
-tzlocal==5.3.1
+# Data Validation
+pydantic>=2.0.0              # Data validation and settings
 
-# HTTP requests
-requests==2.32.5
+# Task Scheduling
+APScheduler>=3.10.0          # Advanced Python Scheduler
 
-# Wikipedia API
-wikipedia==1.4.0
+# HTTP Client
+requests>=2.31.0             # HTTP requests to external APIs
 
-# Keyboard control
-pynput==1.8.1
-python-xlib==0.33
+# External APIs
+wikipedia>=1.4.0             # Wikipedia API for definitions
 
-# Audio playback
-simpleaudio==1.0.4
+# System Control
+pynput>=1.7.6                # Keyboard/mouse control
 
-# YAML parsing
-PyYAML==6.0.2
-
-# Utility
-typing_extensions==4.15.0
-
-# Remove unused/irrelevant packages
+# Configuration
+PyYAML>=6.0                  # YAML parsing for response templates

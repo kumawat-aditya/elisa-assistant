@@ -1,4 +1,4 @@
-version: "3.8"
+# ELISA Voice Assistant - Docker Compose Configuration
 
 services:
   # ============================================================================

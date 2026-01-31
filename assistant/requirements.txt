@@ -1,21 +1,20 @@
 
-# Audio and speech
-PyAudio==0.2.14
-simpleaudio==1.0.4
-webrtcvad==2.0.10
-numpy==1.26.4
-sounddevice>=0.4.6  # PipeWire/PulseAudio compatible audio playback
+# =============================================================================
+# ELISA Assistant Layer - Requirements
+# =============================================================================
+# Voice assistant main module with wake word detection, STT, and TTS integration
 
-# Wake word detection
-openwakeword==0.6.0
+# Audio Processing
+PyAudio>=0.2.14              # Audio input/output via PortAudio
+webrtcvad>=2.0.10            # Voice Activity Detection
+numpy>=1.24.0                # Numerical operations for audio processing
+sounddevice>=0.4.6           # PipeWire/PulseAudio compatible audio playback
 
-# WebSocket UI
-websockets==15.0.1
+# Wake Word Detection
+openwakeword>=0.6.0          # Open source wake word detection
 
-# HTTP requests
-requests==2.32.5
+# WebSocket Communication
+websockets>=12.0             # WebSocket server for UI communication
 
-# Misc
-threadpoolctl==3.6.0  # Used by some dependencies
-
-# Remove unused packages (onnxruntime, tflite-runtime, scikit-learn, scipy, sympy, protobuf, flatbuffers, coloredlogs, tqdm, packaging, joblib, mpmath, humanfriendly, certifi, charset-normalizer, idna, urllib3)
+# HTTP Client
+requests>=2.31.0             # HTTP requests to other services
