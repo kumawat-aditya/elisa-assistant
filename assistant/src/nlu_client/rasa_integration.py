@@ -2,6 +2,33 @@ import requests
 
 RASA_URL = "http://localhost:5005/webhooks/rest/webhook"
 
+def extract_text_from_response(data):
+    """
+    Recursively extract text from various response formats.
+    Handles strings, lists, and dictionaries.
+    """
+    if isinstance(data, str):
+        return data
+    elif isinstance(data, list):
+        # Extract text from each item in the list
+        texts = []
+        for item in data:
+            extracted = extract_text_from_response(item)
+            if extracted:
+                texts.append(extracted)
+        return " ".join(texts) if texts else None
+    elif isinstance(data, dict):
+        # Try to get 'text' key first, then any string value
+        if "text" in data:
+            return extract_text_from_response(data["text"])
+        # Fall back to first string value found
+        for value in data.values():
+            if isinstance(value, str):
+                return value
+        return None
+    return None
+
+
 def process_command(command, sender="user1"):
     """
     Sends the command to Rasa and gets the response.
@@ -25,13 +52,17 @@ def process_command(command, sender="user1"):
             for message in response_data:
                 # Case 1: Response has a direct "text" key
                 if "text" in message:
-                    messages.append(message["text"])
+                    text = extract_text_from_response(message["text"])
+                    if text:
+                        messages.append(text)
 
                 # Case 2: Response is inside "custom"
                 elif "custom" in message:
                     custom_data = message["custom"]
                     if "text" in custom_data:
-                        messages.append(custom_data["text"])
+                        text = extract_text_from_response(custom_data["text"])
+                        if text:
+                            messages.append(text)
                     if custom_data.get("continue"):  # Check "continue" flag
                         continue_conversation = True
 

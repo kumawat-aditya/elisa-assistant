@@ -110,9 +110,9 @@ def meaning_of(word):
             return {"text": f"{success_response}. {know_more_response}", "continue": True}
 
         except wikipedia.exceptions.DisambiguationError as e:
-            return {"text": get_random_response("action_meaning_of", "disambiguation"), "continue": False}
+            return {"text": get_random_response("action_meaning_of", "disambiguation", term=word), "continue": False}
         except wikipedia.exceptions.PageError:
-            return {"text": get_random_response("action_meaning_of", "not_found"), "continue": False}
+            return {"text": get_random_response("action_meaning_of", "not_found", term=word), "continue": False}
 
     else:
         # Randomized response when the word is missing

@@ -10,3 +10,7 @@ stt/whisper.cpp
 nlu/.rasa
 
 *.pyc
+
+shared/audio/temporary/*
+
+logs
