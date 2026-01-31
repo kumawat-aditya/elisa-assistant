@@ -132,9 +132,25 @@ rasa run actions > "$PROJECT_ROOT/logs/nlu_actions.log" 2>&1 &
 NLU_ACTIONS_PID=$!
 log_success "NLU Actions started (PID: $NLU_ACTIONS_PID)"
 
-# Wait for Rasa to initialize
+# Wait for Rasa to initialize (Rasa takes 15-30 seconds to fully start)
 log_info "Waiting for NLU to initialize..."
-sleep 5
+MAX_WAIT=40
+WAITED=0
+while [ $WAITED -lt $MAX_WAIT ]; do
+    if curl -s http://localhost:5005/status > /dev/null 2>&1; then
+        log_success "NLU Server is ready!"
+        break
+    fi
+    sleep 2
+    WAITED=$((WAITED + 2))
+    if [ $((WAITED % 10)) -eq 0 ]; then
+        log_info "Still waiting for NLU... (${WAITED}s / ${MAX_WAIT}s)"
+    fi
+done
+
+if [ $WAITED -ge $MAX_WAIT ]; then
+    log_warn "NLU Server may not be fully ready yet. Continuing anyway..."
+fi
 
 # ============================================================================
 # Step 6: Start Web UI Server
