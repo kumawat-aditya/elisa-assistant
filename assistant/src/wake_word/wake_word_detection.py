@@ -2,122 +2,181 @@ import openwakeword
 from openwakeword.model import Model
 
 import pyaudio
-import struct
 import numpy as np
 import time
+import warnings
+
+# Suppress ALSA warnings
+warnings.filterwarnings("ignore")
+
+# === AUDIO SETTINGS (matching voice_recognition.py) ===
+RATE = 16000
+CHANNELS = 1
+FORMAT = pyaudio.paInt16
+CHUNK = 3200  # frames per buffer for wake word detection
 
 # One-time download of all pre-trained models (or only select models)
 openwakeword.utils.download_models()
 
-# Instantiate the model(s)
+# Instantiate the model with specific wake word
 model = Model(
-    wakeword_models=[],  # Leave empty to load all pre-trained models
+    wakeword_models=["alexa"],  # Use 'alexa' as the wake word
 )
-# last_trigger_time = 0
-# cooldown_seconds = 2  # ignore further detections for 3 seconds
 
-def list_devices(p):
-    print("Available audio devices:")
-    for i in range(p.get_device_count()):
-        info = p.get_device_info_by_index(i)
-        print(f"  [{i}] {info['name']!r} - in:{info['maxInputChannels']} out:{info['maxOutputChannels']} defaultRate:{int(info['defaultSampleRate'])}")
 
-def find_compatible_input_device(p, required_rate):
-    fallback = None
+def find_working_input_device(p):
+    """Find an input device that supports the required sample rate."""
+    # First try to find a device that explicitly supports our sample rate
     for i in range(p.get_device_count()):
-        info = p.get_device_info_by_index(i)
-        if info.get("maxInputChannels", 0) <= 0:
-            continue
         try:
-            if p.is_format_supported(rate=required_rate,
-                                      input_device=i,
-                                      input_channels=1,
-                                      input_format=pyaudio.paInt16):
-                return i, info
-        except ValueError:
-            pass
-        if fallback is None:
-            fallback = (i, info)
-    return fallback
+            info = p.get_device_info_by_index(i)
+            if info.get("maxInputChannels", 0) > 0:
+                # Try to check if format is supported
+                if p.is_format_supported(
+                    rate=float(RATE),
+                    input_device=i,
+                    input_channels=CHANNELS,
+                    input_format=FORMAT
+                ):
+                    return i
+        except (ValueError, OSError):
+            continue
+    
+    # Fallback: try each input device by actually opening a stream
+    for i in range(p.get_device_count()):
+        try:
+            info = p.get_device_info_by_index(i)
+            if info.get("maxInputChannels", 0) > 0:
+                # Try to open a test stream
+                test_stream = p.open(
+                    format=FORMAT,
+                    channels=CHANNELS,
+                    rate=RATE,
+                    input=True,
+                    input_device_index=i,
+                    frames_per_buffer=CHUNK,
+                    start=False
+                )
+                test_stream.close()
+                return i
+        except (ValueError, OSError):
+            continue
+    
+    return None  # Will use default
 
 
 def listen_for_wake_word(callback):
     print("Initializing wake word detection with open wake word...")
     last_trigger_time = 0
-    cooldown_seconds = 1.0
-    is_listening = True  # flag to prevent re-entry during callback
+    cooldown_seconds = 3.0  # Increased cooldown to prevent re-triggering from TTS audio
 
-    try:
-        p = pyaudio.PyAudio()
-        list_devices(p)
-
-        found = find_compatible_input_device(p, required_rate=16000)
-        if found is None:
-            print("Warning: No input-capable audio device found. Using default.")
-            device_index = None
-        else:
-            device_index, device_info = found
-            print(f"Selected device [{device_index}]: {device_info['name']}")
-
-        stream = p.open(format=pyaudio.paInt16,
-                        channels=1,
-                        rate=16000,
-                        input=True,
-                        frames_per_buffer=3200,
-                        input_device_index=device_index)
-
-        print("Listening for wake word...")
-
-        while True:
-            if not is_listening:
-                time.sleep(0.1)
-                continue
-
-            try:
-                data = stream.read(3200, exception_on_overflow=False)
-            except Exception as e:
-                print(f"Stream read error: {e}")
-                continue
-
-            frame = np.frombuffer(data, dtype=np.int16)
-            prediction = model.predict(frame)
-            
-            score = prediction.get('alexa', 0)
-
-            current_time = time.time()
-            if score > 0.5 and (current_time - last_trigger_time > cooldown_seconds):
-                print("Wake word detected!")
-                last_trigger_time = current_time
-                is_listening = False  # prevent further detection
-
-                # Flush buffer by reading frames before stopping the stream
-                for _ in range(5):
-                    try:
-                        stream.read(3200, exception_on_overflow=False)
-                    except Exception as e:
-                        print(f"Flush read error: {e}")
-
-                # Now stop the stream
-                stream.stop_stream()
-
-                # Execute callback
-                callback()
-
-                # Restart the stream
-                stream.start_stream()
-                is_listening = True
-
-    except KeyboardInterrupt:
-        print("\nStopped by user.")
-    except Exception as e:
-        print(f"Error during wake word detection: {e}")
-    finally:
+    while True:
+        p = None
+        stream = None
+        
         try:
-            stream.stop_stream()
-            stream.close()
-            p.terminate()
-        except:
-            pass
+            p = pyaudio.PyAudio()
+
+            # Try to find a working device
+            device_index = find_working_input_device(p)
+            
+            if device_index is not None:
+                device_info = p.get_device_info_by_index(device_index)
+                print(f"Using audio device [{device_index}]: {device_info['name']}")
+            else:
+                print("Using default audio device")
+            
+            # Open stream with found device (or default if None)
+            stream = p.open(format=FORMAT,
+                            channels=CHANNELS,
+                            rate=RATE,
+                            input=True,
+                            input_device_index=device_index,
+                            frames_per_buffer=CHUNK)
+
+            print("Listening for wake word...")
+            
+            # Wait a bit after restarting to let TTS audio settle
+            # This prevents the wake word model from picking up residual TTS audio
+            time.sleep(0.5)
+            
+            # Clear the audio buffer by reading and discarding initial frames
+            for _ in range(10):
+                try:
+                    stream.read(CHUNK, exception_on_overflow=False)
+                except:
+                    pass
+
+            while True:
+                try:
+                    data = stream.read(CHUNK, exception_on_overflow=False)
+                except Exception as e:
+                    print(f"Stream read error: {e}")
+                    continue
+
+                frame = np.frombuffer(data, dtype=np.int16)
+                prediction = model.predict(frame)
+                
+                score = prediction.get('alexa', 0)
+                
+                # Debug: Show scores above a minimum threshold
+                if score > 0.3:
+                    print(f"  [Wake word score: {score:.2f}]", end="\r")
+
+                current_time = time.time()
+                # Using higher threshold (0.8) to reduce false positives
+                if score > 0.8 and (current_time - last_trigger_time > cooldown_seconds):
+                    print(f"\nWake word detected! (score: {score:.2f})")
+                    last_trigger_time = current_time
+
+                    # Flush buffer by reading frames before stopping the stream
+                    for _ in range(5):
+                        try:
+                            stream.read(CHUNK, exception_on_overflow=False)
+                        except Exception as e:
+                            pass  # Ignore flush errors
+
+                    # IMPORTANT: Fully close the stream and PyAudio BEFORE callback
+                    # This releases the audio device for voice_recognition to use
+                    stream.stop_stream()
+                    stream.close()
+                    stream = None
+                    p.terminate()
+                    p = None
+                    
+                    # Reset the wake word model's internal audio buffer
+                    # This prevents the model from triggering on residual TTS audio
+                    model.reset()
+                    
+                    # Small delay to ensure device is released
+                    time.sleep(0.3)
+
+                    # Execute callback (voice recognition will use the device)
+                    callback()
+                    
+                    # Break inner loop to reinitialize audio after callback
+                    break
+
+        except KeyboardInterrupt:
+            print("\nStopped by user.")
+            break
+        except Exception as e:
+            print(f"Error during wake word detection: {e}")
+            time.sleep(1)  # Wait before retry
+        finally:
+            # Ensure cleanup
+            if stream is not None:
+                try:
+                    stream.stop_stream()
+                    stream.close()
+                except:
+                    pass
+            if p is not None:
+                try:
+                    p.terminate()
+                except:
+                    pass
+
 
 # def main():
 #     def wake_word_detected():
