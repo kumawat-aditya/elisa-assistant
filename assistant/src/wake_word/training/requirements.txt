@@ -1,0 +1,28 @@
+# Wake Word Training Dependencies
+# ================================
+
+# Core ML/Audio Processing
+numpy>=1.21.0
+scipy>=1.7.0
+librosa>=0.9.0
+soundfile>=0.10.0
+
+# Audio Recording
+pyaudio>=0.2.11
+webrtcvad>=2.0.10
+
+# Data Augmentation
+audiomentations>=0.25.0
+
+# Deep Learning
+tensorflow>=2.10.0
+onnx>=1.12.0
+onnxruntime>=1.12.0
+
+# OpenWakeWord (training utilities)
+openwakeword>=0.5.0
+
+# Utilities
+tqdm>=4.64.0
+matplotlib>=3.5.0
+scikit-learn>=1.0.0

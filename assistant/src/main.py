@@ -1,9 +1,8 @@
 from wake_word.wake_word_detection import listen_for_wake_word
-from stt.voice_recognition import recognize_speech
+from stt.voice_recognition import recognize_speech, play_wav_file
 from nlu_client.rasa_integration import process_command
 from tts.text_to_speech import speak_response
 from session.websocket import create_ui_logger, ui_controller
-import simpleaudio as sa
 import os
 import time
 
@@ -22,12 +21,8 @@ def assistant_workflow():
     print("Playing boot sound...")
     base_dir = os.path.dirname(os.path.abspath(__file__))
     boot_path = os.path.join(base_dir, "../../shared/audio/permanent/boot.wav").replace("\\", "/")
-    try:
-        sa.WaveObject.from_wave_file(boot_path).play().wait_done()
-        # ui_logger.log_success("Boot sound completed")
-    except Exception as e:
-        # ui_logger.log_error(f"Failed to play boot sound: {str(e)}")
-        print(f"Failed to play boot sound: {str(e)}")
+    if not play_wav_file(boot_path):
+        print(f"Failed to play boot sound: No audio playback method available")
 
     # =============================== GREETING =============================
     # Set UI to processing state for Rasa greeting
