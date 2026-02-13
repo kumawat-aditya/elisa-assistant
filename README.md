@@ -2,10 +2,10 @@
 
 <div align="center">
 
-[![Python](https://img.shields.io/badge/Python-3.9+-3776AB?logo=python\&logoColor=white)](https://python.org)
-[![Rasa](https://img.shields.io/badge/Rasa-3.x-5A17EE?logo=rasa\&logoColor=white)](https://rasa.com)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?logo=fastapi\&logoColor=white)](https://fastapi.tiangolo.com)
-[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker\&logoColor=white)](https://docker.com)
+[![Python](https://img.shields.io/badge/Python-3.9+-3776AB?logo=python&logoColor=white)](https://python.org)
+[![Rasa](https://img.shields.io/badge/Rasa-3.x-5A17EE?logo=rasa&logoColor=white)](https://rasa.com)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://docker.com)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE.txt)
 
 **Modular, local-first voice assistant built with Rasa, FastAPI, and Whisper**
@@ -24,10 +24,10 @@ The system is structured as independent services communicating over HTTP and Web
 
 Core principles:
 
-* Modular architecture
-* Local processing (no cloud dependency required)
-* Clear service boundaries
-* Reproducible setup with Docker
+- Modular architecture
+- Local processing (no cloud dependency required)
+- Clear service boundaries
+- Reproducible setup with Docker
 
 ---
 
@@ -70,28 +70,28 @@ Audio Output
 
 ### 1️⃣ Assistant Layer (`assistant/`)
 
-* Main runtime entry point
-* Wake word detection
-* Audio recording
-* STT integration
-* Rasa API client
-* WebSocket communication with UI
+- Main runtime entry point
+- Wake word detection
+- Audio recording
+- STT integration
+- Rasa API client
+- WebSocket communication with UI
 
 ### 2️⃣ NLU Layer (`nlu/`)
 
-* Intent classification
-* Entity extraction
-* Dialogue handling
-* Custom actions
-* Duckling integration
+- Intent classification
+- Entity extraction
+- Dialogue handling
+- Custom actions
+- Duckling integration
 
 ### 3️⃣ Logic Layer (`logic/`)
 
-* Business logic modules
-* Reminder scheduling
-* Desktop control
-* External API integrations
-* Response formatting
+- Business logic modules
+- Reminder scheduling
+- Desktop control
+- External API integrations
+- Response formatting
 
 ---
 
@@ -154,10 +154,10 @@ elisa-assistant/
 
 ## Prerequisites
 
-* Python 3.9+
-* Docker & Docker Compose
-* CMake + C++ compiler
-* PortAudio
+- Python 3.9+
+- Docker & Docker Compose
+- CMake + C++ compiler
+- PortAudio
 
 Linux example:
 
@@ -172,7 +172,7 @@ sudo apt install portaudio19-dev
 ### 1. Clone
 
 ```bash
-git clone https://github.com/Adikumaw/elisa-assistant.git
+git clone https://github.com/kumawat-aditya/elisa-assistant.git
 cd elisa-assistant
 ```
 
@@ -269,14 +269,14 @@ docker-compose down
 
 # 📜 Supported Commands
 
-* Greetings
-* Time / Date queries
-* App launching
-* Web search
-* Dictation
-* Word definitions
-* Weather queries
-* Reminder creation / listing
+- Greetings
+- Time / Date queries
+- App launching
+- Web search
+- Dictation
+- Word definitions
+- Weather queries
+- Reminder creation / listing
 
 ---
 
@@ -325,9 +325,9 @@ rasa shell
 
 # 📚 Documentation
 
-* `docs/setup.txt`
-* `docs/docker_how_to.txt`
-* `docs/venv_how_to.txt`
+- `docs/setup.txt`
+- `docs/docker_how_to.txt`
+- `docs/venv_how_to.txt`
 
 ---
 
