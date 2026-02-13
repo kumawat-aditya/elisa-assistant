@@ -20,7 +20,7 @@ This guide provides detailed instructions for setting up ELISA Voice Assistant.
 ## Step 1: Clone Repository
 
 ```bash
-git clone https://github.com/Adikumaw/elisa-assistant.git
+git clone https://github.com/kumawat-aditya/elisa-assistant.git
 cd elisa-assistant
 ```
 
