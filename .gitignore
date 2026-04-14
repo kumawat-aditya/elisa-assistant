@@ -1,16 +1,21 @@
-
 .vscode
 
+# env's
 app_env
 logic_env
 nlu_env
 
+# Whisper root directory
 stt/whisper.cpp
 
+# rasa root directory
 nlu/.rasa
 
+# pyc cache
 *.pyc
 
+# temporary audio
 shared/audio/temporary/*
 
+# Logs
 logs
