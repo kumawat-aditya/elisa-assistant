@@ -1,4 +1,11 @@
-/* Layout grid — 12-col / 12-row */
+/* ═══════════════════════════════════════════════════════
+   LAYOUT  —  fluid responsive grid
+   Breakpoints:
+     >1024px  Desktop  : 3-col fluid grid
+     600–1024 Tablet   : 2-col, vitals hidden (tab-accessible)
+     <600px   Mobile   : single panel + bottom nav tabs
+   ═══════════════════════════════════════════════════════ */
+
 body {
   display: flex;
   flex-direction: column;
@@ -6,61 +13,71 @@ body {
   overflow: hidden;
 }
 
+/* ── Desktop grid (>1024px) ──────────────────────────────
+   Vitals   : fluid clamp(180px → 300px)
+   Center   : flexible 1fr
+   Conv     : fluid clamp(300px → 500px)
+   Row 1    : avatar / conv-top  — tall
+   Row 2    : pipeline           — medium auto
+   Row 3    : logs               — tall
+   ────────────────────────────────────────────────────── */
 main.grid {
   position: relative;
   z-index: 1;
   flex: 1 1 auto;
   min-height: 0;
   display: grid;
-  grid-template-columns: 220px 1fr 420px;
-  grid-template-rows: minmax(180px, 1fr) minmax(120px, auto) minmax(
-      220px,
-      1.2fr
-    );
-  gap: 14px;
-  padding: 12px 14px 14px;
+  grid-template-columns:
+    clamp(180px, 15vw, 300px)
+    1fr
+    clamp(300px, 27vw, 500px);
+  grid-template-rows:
+    minmax(clamp(140px, 18vh, 240px), 1fr)
+    minmax(clamp(90px, 11vh, 150px), auto)
+    minmax(clamp(180px, 24vh, 300px), 1.2fr);
+  gap: clamp(8px, 0.8vw, 16px);
+  padding: clamp(8px, 0.8vw, 14px) clamp(10px, 1vw, 16px) clamp(10px, 1vw, 16px);
 }
+
+/* Grid cell placements */
 .grid__vitals {
-  grid-area: vitals;
   grid-column: 1;
   grid-row: 1 / 3;
   min-height: 0;
   overflow: hidden;
 }
 .grid__avatar {
-  grid-area: avatar;
   grid-column: 2;
   grid-row: 1;
   min-height: 0;
   overflow: hidden;
 }
 .grid__pipeline {
-  grid-area: pipeline;
   grid-column: 2;
   grid-row: 2;
   min-height: 0;
 }
 .grid__conv {
-  grid-area: conv;
   grid-column: 3;
   grid-row: 1 / 3;
   min-height: 0;
   overflow: hidden;
 }
 .grid__logs {
-  grid-area: logs;
   grid-column: 1 / 4;
   grid-row: 3;
   min-height: 0;
   overflow: hidden;
 }
-/* Panel skeleton */
+
+/* ── Panel skeleton ── */
 .panel {
   position: relative;
   display: flex;
   flex-direction: column;
   min-height: 0;
-  padding: 14px 16px 12px;
+  padding: clamp(10px, 0.9vw, 16px) clamp(12px, 1vw, 18px)
+    clamp(8px, 0.7vw, 14px);
 }
 .panel__header {
   display: flex;
@@ -76,7 +93,7 @@ main.grid {
 }
 .panel__header h2 {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: clamp(9px, 0.65vw, 13px);
   font-weight: 500;
   letter-spacing: 0.22em;
   text-transform: uppercase;
@@ -91,7 +108,7 @@ main.grid {
 }
 .panel__sub {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: clamp(8px, 0.6vw, 12px);
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--nebula-300);
@@ -99,23 +116,213 @@ main.grid {
 
 /* Logs expanded mode */
 .grid--logs-expanded {
-  grid-template-rows: minmax(120px, 0.5fr) auto minmax(360px, 2fr);
+  grid-template-rows:
+    minmax(100px, 0.5fr)
+    auto
+    minmax(300px, 2fr);
 }
 
-@media (max-width: 1280px) {
+/* ══════════════════════════════════════════════════════
+   TABLET  600px – 1024px
+   2-column: avatar+pipeline left, conv right, logs full
+   Vitals hidden by default — shown via mob-nav tab
+   ══════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  body {
+    padding-bottom: 54px;
+  }
+
   main.grid {
-    grid-template-columns: 200px 1fr 360px;
+    grid-template-columns: 1fr clamp(240px, 35vw, 360px);
+    grid-template-rows:
+      minmax(120px, 1.2fr)
+      minmax(100px, 0.4fr)
+      minmax(120px, 1fr);
+  }
+
+  .grid__vitals {
+    display: none;
+  }
+  .grid__avatar {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .grid__pipeline {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .grid__conv {
+    grid-column: 2;
+    grid-row: 1 / 3;
+  }
+  .grid__logs {
+    grid-column: 1 / 3;
+    grid-row: 3;
+  }
+
+  /* Vitals shown as overlay sheet when mob-nav tab active */
+  .grid__vitals.mob-active {
+    display: flex;
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    bottom: 64px;
+    z-index: 50;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    /* Override glass transparency — overlay must be opaque */
+    background: rgba(5, 7, 22, 0.97) !important;
+    backdrop-filter: blur(20px) saturate(160%);
+    -webkit-backdrop-filter: blur(20px) saturate(160%);
   }
 }
-@media (max-width: 1080px) {
+
+/* ══════════════════════════════════════════════════════
+   MOBILE  < 600px
+   Single panel at a time, fixed position, bottom nav tabs
+   ══════════════════════════════════════════════════════ */
+@media (max-width: 599px) {
+  body {
+    height: 100vh;
+    overflow: hidden;
+    padding-bottom: 0;
+  }
+
+  /* Topbar: pinned, compact, full-width */
+  .topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    margin: 0;
+    border-radius: 0;
+    padding: 8px 14px;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+  }
+  .topbar__right {
+    display: none;
+  }
+  .brand-tag {
+    display: none;
+  }
+
+  /* Grid becomes a fixed positioning context, not a visual grid */
   main.grid {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto auto auto auto;
-    grid-template-areas:
-      "avatar"
-      "pipeline"
-      "vitals"
-      "conv"
-      "logs";
+    display: block;
+    position: fixed;
+    top: 50px;
+    left: 0;
+    right: 0;
+    bottom: 60px;
+    padding: 0;
+    gap: 0;
+  }
+
+  /* All panels hidden by default, shown when mob-active */
+  .grid__vitals,
+  .grid__avatar,
+  .grid__pipeline,
+  .grid__conv,
+  .grid__logs {
+    display: none;
+    position: absolute;
+    inset: 8px;
+    min-height: 0;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+  }
+
+  .grid__vitals.mob-active,
+  .grid__avatar.mob-active,
+  .grid__pipeline.mob-active,
+  .grid__conv.mob-active,
+  .grid__logs.mob-active {
+    display: flex;
+    flex-direction: column;
+    /* Override glass transparency so panels don't bleed through each other */
+    background: rgba(5, 7, 22, 0.97) !important;
+  }
+
+  /* Pipeline panel needs padding and centering on mobile */
+  .grid__pipeline.mob-active {
+    align-items: stretch;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   MOBILE BOTTOM NAV  (≤ 1024px)
+   ══════════════════════════════════════════════════════ */
+.mob-nav {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .mob-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 54px;
+    background: rgba(5, 7, 26, 0.96);
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    border-top: 1px solid rgba(0, 245, 255, 0.12);
+    z-index: 200;
+    align-items: stretch;
+  }
+
+  .mob-nav__btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    font-family: var(--font-mono);
+    font-size: 8px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(230, 235, 255, 0.4);
+    background: none;
+    border: none;
+    border-top: 2px solid transparent;
+    cursor: pointer;
+    padding: 0 4px;
+    transition:
+      color 160ms var(--ease),
+      border-color 160ms var(--ease),
+      background 160ms var(--ease);
+  }
+
+  .mob-nav__icon {
+    font-size: 17px;
+    line-height: 1.1;
+  }
+
+  .mob-nav__btn:hover {
+    color: var(--plasma-300);
+  }
+
+  .mob-nav__btn.active {
+    color: var(--plasma-300);
+    border-top-color: var(--plasma-500);
+    background: rgba(0, 245, 255, 0.04);
+  }
+}
+
+@media (max-width: 599px) {
+  .mob-nav {
+    height: 60px;
+  }
+  .mob-nav__icon {
+    font-size: 20px;
+  }
+  .mob-nav__btn {
+    font-size: 7px;
   }
 }
