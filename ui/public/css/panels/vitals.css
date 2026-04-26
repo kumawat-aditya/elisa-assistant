@@ -1,0 +1,117 @@
+/* Vitals */
+.vitals-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.vitals-section__title {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(230, 235, 255, 0.4);
+  margin-bottom: 6px;
+}
+.services-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.services-list li {
+  display: grid;
+  grid-template-columns: 10px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+}
+.svc-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(148, 163, 184, 0.4);
+  box-shadow: none;
+}
+.services-list li[data-status="up"] .svc-dot {
+  background: var(--ok);
+  box-shadow: 0 0 8px var(--ok);
+}
+.services-list li[data-status="degraded"] .svc-dot {
+  background: var(--warn);
+  box-shadow: 0 0 8px var(--warn);
+}
+.services-list li[data-status="down"] .svc-dot {
+  background: var(--err);
+  box-shadow: 0 0 8px var(--err);
+}
+.svc-name {
+  color: rgba(230, 235, 255, 0.85);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.svc-meta {
+  color: rgba(230, 235, 255, 0.45);
+}
+
+.sparklines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sparkline {
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+.sparkline__row {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: rgba(230, 235, 255, 0.6);
+  margin-bottom: 4px;
+}
+.sparkline__value {
+  color: var(--plasma-300);
+}
+.sparkline canvas {
+  width: 100%;
+  height: 32px;
+  display: block;
+}
+
+.counters {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.counters li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+.counters li span {
+  color: rgba(230, 235, 255, 0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.counters li strong {
+  color: var(--plasma-300);
+  font-size: 16px;
+  font-weight: 500;
+  font-family: var(--font-mono);
+}

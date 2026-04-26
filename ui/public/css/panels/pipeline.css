@@ -1,0 +1,126 @@
+.pipeline {
+  position: relative;
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 6px 14px;
+}
+
+.pipeline__svg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.pipeline__nodes {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 4px;
+}
+
+.pl-node {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.pl-node__core {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(0, 245, 255, 0.18);
+  background: rgba(8, 12, 28, 0.65);
+  color: rgba(230, 235, 255, 0.55);
+  font-family: var(--font-mono);
+  font-size: 16px;
+  transition: all 280ms var(--ease);
+  position: relative;
+}
+.pl-node__core::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  transition: all 280ms var(--ease);
+}
+
+.pl-node__label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(230, 235, 255, 0.45);
+}
+
+.pl-node--active .pl-node__core {
+  border-color: var(--plasma-500);
+  color: var(--plasma-300);
+  background: rgba(0, 245, 255, 0.1);
+  box-shadow:
+    0 0 24px rgba(0, 245, 255, 0.45),
+    inset 0 0 12px rgba(0, 245, 255, 0.2);
+}
+.pl-node--active .pl-node__core::after {
+  border-color: rgba(0, 245, 255, 0.45);
+  animation: ring-radiate 1.4s ease-out infinite;
+}
+.pl-node--active .pl-node__label {
+  color: var(--plasma-300);
+}
+
+.pl-node--done .pl-node__core {
+  border-color: rgba(52, 211, 153, 0.55);
+  color: var(--ok);
+  background: rgba(52, 211, 153, 0.06);
+}
+.pl-node--done .pl-node__label {
+  color: rgba(52, 211, 153, 0.7);
+}
+
+.pl-node__tip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(5, 7, 26, 0.95);
+  border: 1px solid rgba(0, 245, 255, 0.25);
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  white-space: pre;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 180ms var(--ease);
+  max-width: 260px;
+  z-index: 5;
+}
+.pl-node:hover .pl-node__tip[data-empty="false"] {
+  opacity: 1;
+}
+
+/* connector line drawn in SVG */
+.pl-connector {
+  fill: none;
+  stroke: rgba(0, 245, 255, 0.15);
+  stroke-width: 1.4;
+  stroke-dasharray: 4 6;
+}
+.pl-connector--active {
+  stroke: rgba(0, 245, 255, 0.6);
+  animation: flow-dash 1.2s linear infinite;
+}
