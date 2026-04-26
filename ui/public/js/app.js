@@ -27,6 +27,7 @@ function bootstrap() {
 
   wireConnectionBanner();
   wireStatePill();
+  wireMobileNav();
 
   // Start websocket client
   startClient();
@@ -73,6 +74,44 @@ function wireStatePill() {
   store.on("pipeline:stage", update);
   store.on("snapshot", update);
   update();
+}
+
+/**
+ * Mobile / Tablet bottom nav — shows/hides panels via .mob-active class.
+ * On desktop the nav is CSS display:none so this handler is effectively a no-op.
+ */
+function wireMobileNav() {
+  const nav = document.getElementById("mob-nav");
+  if (!nav) return;
+
+  // Map data-panel → grid cell element
+  const PANEL_MAP = {
+    avatar: document.getElementById("panel-avatar"),
+    pipeline: document.getElementById("panel-pipeline"),
+    conv: document.getElementById("panel-conv"),
+    vitals: document.getElementById("panel-vitals"),
+    logs: document.getElementById("panel-logs"),
+  };
+
+  function activatePanel(panelKey) {
+    // Update panel visibility
+    for (const [key, el] of Object.entries(PANEL_MAP)) {
+      if (el) el.classList.toggle("mob-active", key === panelKey);
+    }
+    // Update nav button states
+    nav.querySelectorAll(".mob-nav__btn").forEach((btn) => {
+      btn.classList.toggle("active", btn.dataset.panel === panelKey);
+    });
+  }
+
+  nav.addEventListener("click", (e) => {
+    const btn = e.target.closest(".mob-nav__btn");
+    if (!btn) return;
+    activatePanel(btn.dataset.panel);
+  });
+
+  // Default: show avatar panel on load
+  activatePanel("avatar");
 }
 
 function showToast(text, kind = "info") {

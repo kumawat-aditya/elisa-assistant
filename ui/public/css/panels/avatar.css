@@ -11,7 +11,7 @@
 
 .avatar-orb {
   position: relative;
-  width: min(280px, 60%);
+  width: min(min(260px, 28vw), 60%);
   aspect-ratio: 1 / 1;
   display: flex;
   align-items: center;
@@ -96,7 +96,7 @@
 .orb-label {
   position: relative;
   font-family: var(--font-mono);
-  font-size: 14px;
+  font-size: clamp(10px, 1vw, 16px);
   letter-spacing: 0.5em;
   color: var(--plasma-300);
   text-shadow: 0 0 12px rgba(0, 245, 255, 0.8);

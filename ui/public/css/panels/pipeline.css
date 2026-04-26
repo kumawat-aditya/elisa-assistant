@@ -35,8 +35,8 @@
 }
 
 .pl-node__core {
-  width: 44px;
-  height: 44px;
+  width: clamp(34px, 3.5vw, 50px);
+  height: clamp(34px, 3.5vw, 50px);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -45,7 +45,7 @@
   background: rgba(8, 12, 28, 0.65);
   color: rgba(230, 235, 255, 0.55);
   font-family: var(--font-mono);
-  font-size: 16px;
+  font-size: clamp(12px, 1.2vw, 18px);
   transition: all 280ms var(--ease);
   position: relative;
 }
@@ -60,7 +60,7 @@
 
 .pl-node__label {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: clamp(8px, 0.65vw, 11px);
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: rgba(230, 235, 255, 0.45);
@@ -101,7 +101,7 @@
   padding: 6px 10px;
   border-radius: 8px;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: clamp(9px, 0.7vw, 12px);
   white-space: pre;
   pointer-events: none;
   opacity: 0;
