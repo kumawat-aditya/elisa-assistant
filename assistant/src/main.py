@@ -3,20 +3,18 @@ from stt.voice_recognition import recognize_speech, play_wav_file
 from nlu_client.rasa_integration import process_command
 from tts.text_to_speech import speak_response
 from session.websocket import create_ui_logger, ui_controller
+from session.health import start_health_monitor
 import os
 import time
 
 # Create UI logger for this module
 ui_logger = create_ui_logger("Main")
 
+
 def assistant_workflow():
+    ui_controller.set_pipeline_stage("idle")
 
     # ============================== PLAY BOOT SOUND AND GREETING =============================
-    # Set UI to boot state
-    # ui_logger.set_state("boot")
-    # ui_logger.log_info("System booting...")
-    # play boot sound before listening the command
-    # ui_logger.log_info("Playing boot sound...")
     print("starting assistant workflow...")
     print("Playing boot sound...")
     base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -25,139 +23,135 @@ def assistant_workflow():
         print(f"Failed to play boot sound: No audio playback method available")
 
     # =============================== GREETING =============================
-    # Set UI to processing state for Rasa greeting
-    # ui_logger.set_state("processing")
-    # ui_logger.log_info("starting Greeting Sequence...")
+    ui_controller.set_pipeline_stage("nlu", {"reason": "greeting"})
     print("starting Greeting Sequence...")
-    
-    # Send greeting message to rasa
+
     try:
+        nlu_t0 = time.time()
         responses, continue_conversation = process_command("wake up elisa")
-        # ui_logger.log_success(f"Received {len(responses)} responses from Rasa")
+        nlu_ms = int((time.time() - nlu_t0) * 1000)
+        ui_controller.send_metric("nlu_latency_ms", nlu_ms, "ms")
         print(f"Received {len(responses)} responses from Rasa")
     except Exception as e:
-        # ui_logger.log_error(f"Failed to process greeting: {str(e)}")
+        ui_controller.send_error("greeting", f"Failed to process greeting: {e}", e)
         print(f"Failed to process greeting: {str(e)}")
         return
-    
-    # Set UI to speaking state
-    # ui_logger.set_state("speaking")
+
+    ui_controller.set_pipeline_stage("tts", {"reason": "greeting"})
     print("Speaking greeting responses...")
-    # Speak all responses that rasa sent
     for i, response in enumerate(responses):
-        # ui_logger.log_info(f"Speaking response {i+1}: {response[:50]}{'...' if len(response) > 50 else ''}")
         print(f"Speaking response {i+1}: {response[:50]}{'...' if len(response) > 50 else ''}")
+        ui_controller.send_conversation_turn("assistant", response, {"phase": "greeting"})
         try:
-            speak_response(response)  # Speak each response
+            tts_t0 = time.time()
+            speak_response(response)
+            ui_controller.send_metric("tts_latency_ms", int((time.time() - tts_t0) * 1000), "ms")
         except Exception as e:
-            # ui_logger.log_error(f"Failed to speak response: {str(e)}")
+            ui_controller.send_error("tts", f"Failed to speak response: {e}", e)
             print(f"Failed to speak response: {str(e)}")
 
-    # ui_logger.log_success("Greeting sequence completed")
     print("Greeting sequence completed")
 
     # ================================ LISTEN FOR COMMAND =============================
-    # Keep listening while the conversation is ongoing
     while True:
-
-        # Set UI to listening state
-        # Recognize speech after the wake word is detected
-        # Give three chances to recognize the command
         command = None
         for attempt in range(3):
-            # ui_logger.log_info("Setting up Voice Recognition...")
+            ui_controller.set_pipeline_stage("vad", {"attempt": attempt + 1})
             print("Setting up Voice Recognition...")
-            # ui_logger.log_info(f"Attempt {attempt + 1} to recognize command...")
-            
+
             try:
+                stt_t0 = time.time()
                 command = recognize_speech()
                 if command is not None:
-                    # ui_logger.log_success(f"Command recognized: '{command}'")
+                    ui_controller.set_pipeline_stage("stt", {"transcript": command})
+                    ui_controller.send_metric("stt_latency_ms", int((time.time() - stt_t0) * 1000), "ms")
                     print(f"Command recognized: '{command}'")
                     break
                 else:
-                    # ui_logger.log_warning(f"No speech detected on attempt {attempt + 1}")
                     print(f"No speech detected on attempt {attempt + 1}")
-                    if attempt < 2:  # Don't speak on last attempt
-                        # ui_logger.set_state("speaking")
-                        # ui_logger.log_info("Speaking retry message...")
+                    if attempt < 2:
+                        ui_controller.set_pipeline_stage("tts", {"reason": "retry-prompt"})
                         print("Speaking retry message...")
                         speak_response("I couldn't hear you. Please try again.")
             except Exception as e:
-                # ui_logger.log_error(f"Error during speech recognition: {str(e)}")
+                ui_controller.send_error("stt", f"Error during speech recognition: {e}", e)
                 print(f"Error during speech recognition: {str(e)}")
-        
+
         if command is None:
-            # ui_logger.log_error("Failed to recognize command after 3 attempts")
-            # ui_logger.set_state("speaking")
+            ui_controller.set_pipeline_stage("tts", {"reason": "give-up"})
             speak_response("I'm sorry, I couldn't understand you. Please try again later.")
+            ui_controller.set_pipeline_stage("idle")
             continue
-        
-        # Set UI to processing state
-        # ui_logger.set_state("processing")
-        # ui_logger.log_info(f"Processing command with Rasa: '{command}'")
+
+        # User turn
+        ui_controller.send_conversation_turn("user", command)
+
+        # Process with Rasa
+        ui_controller.set_pipeline_stage("nlu", {"command": command})
         print(f"Processing command with Rasa: '{command}'")
-        
-        # Process the recognized command with Rasa
+
         try:
+            nlu_t0 = time.time()
             responses, continue_conversation = process_command(command)
-            # ui_logger.log_success(f"Rasa processed command, got {len(responses)} responses")
-            # ui_logger.log_info(f"Continue conversation: {continue_conversation}")
+            nlu_ms = int((time.time() - nlu_t0) * 1000)
+            ui_controller.send_metric("nlu_latency_ms", nlu_ms, "ms")
             print(f"Rasa processed command, got {len(responses)} responses")
         except Exception as e:
-            # ui_logger.log_error(f"Failed to process command with Rasa: {str(e)}")
+            ui_controller.send_error("nlu", f"Failed to process command: {e}", e)
             print(f"Failed to process command with Rasa: {str(e)}")
+            ui_controller.set_pipeline_stage("idle")
             continue
-        
-        # Set UI to speaking state
-        # ui_logger.set_state("speaking")
+
+        # Speak
+        ui_controller.set_pipeline_stage("tts")
         print("Speaking command responses...")
-        
-        # Speak all responses
         for i, response in enumerate(responses):
-            # ui_logger.log_info(f"Speaking response {i+1}: {response[:50]}{'...' if len(response) > 50 else ''}")
             print(f"Speaking response {i+1}: {response[:50]}{'...' if len(response) > 50 else ''}")
+            ui_controller.send_conversation_turn("assistant", response, {"latency_ms": nlu_ms})
             try:
-                speak_response(response)  # Speak each response
+                tts_t0 = time.time()
+                speak_response(response)
+                ui_controller.send_metric("tts_latency_ms", int((time.time() - tts_t0) * 1000), "ms")
             except Exception as e:
-                # ui_logger.log_error(f"Failed to speak response: {str(e)}")
+                ui_controller.send_error("tts", f"Failed to speak response: {e}", e)
                 print(f"Failed to speak response: {str(e)}")
-        
+
         if not continue_conversation:
-            # ui_logger.log_info("No further conversation needed - ending session")
-            # ui_logger.set_state("idle")
             print("No further conversation needed - ending session")
-            break  # Exit loop if no further conversation is needed
+            ui_controller.set_pipeline_stage("idle")
+            break
         else:
-            # ui_logger.log_info("Conversation continuing...")
             print("Conversation continuing...")
 
 
 def main():
-    """Main function to start the assistant with UI"""
-    
-    # Start the WebSocket server
-    # ui_logger.log_info("Starting Elisa Assistant...")
-    # ui_logger.log_info("Initializing WebSocket server...")
+    """Main function to start the assistant with UI."""
+
+    # Install interceptors FIRST so every print() / logging call after this
+    # point is mirrored to the UI with zero changes to the existing codebase.
+    ui_controller.install_interceptors()
+
     print("Starting Elisa Assistant...")
-    
+
     try:
-        # server_thread = ui_controller.start_server(host="localhost", port=8765)
-        # ui_logger.log_success("WebSocket server started on ws://localhost:8765")
-        # ui_logger.log_info("Open the UI in your browser and refresh to connect")
-        
-        # Give server time to start
-        time.sleep(2)
-        
-        # Start listening for the wake word with our workflow
-        # ui_logger.log_info("Starting wake word detection...")
+        ui_controller.start_server(host="localhost", port=8765)
+        print("WebSocket server started on ws://localhost:8765")
+        print("Open the UI: http://localhost:35109/")
+
+        # Background health monitor for service status pills.
+        start_health_monitor()
+
+        time.sleep(1)
+
+        ui_controller.set_pipeline_stage("wake_word")
         print("Starting wake word detection...")
         listen_for_wake_word(assistant_workflow)
-        
+
     except Exception as e:
-        # ui_logger.log_error(f"Failed to start assistant: {str(e)}")
+        ui_controller.send_error("main", f"Failed to start assistant: {e}", e)
         print(f"Failed to start assistant: {str(e)}")
         raise
+
 
 if __name__ == "__main__":
     main()

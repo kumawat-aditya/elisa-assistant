@@ -1,0 +1,110 @@
+/* Layout grid — 12-col / 12-row */
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+main.grid {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: 220px 1fr 420px;
+  grid-template-rows: minmax(280px, 1fr) auto minmax(280px, 1.2fr);
+  grid-template-areas:
+    "vitals avatar conv"
+    "vitals pipeline conv"
+    "logs   logs    logs";
+  gap: 14px;
+  padding: 12px 14px 14px;
+  min-height: 0;
+}
+.grid__vitals {
+  grid-area: vitals;
+  min-height: 0;
+  overflow: hidden;
+}
+.grid__avatar {
+  grid-area: avatar;
+  min-height: 0;
+  overflow: hidden;
+}
+.grid__pipeline {
+  grid-area: pipeline;
+  min-height: 0;
+}
+.grid__conv {
+  grid-area: conv;
+  min-height: 0;
+  overflow: hidden;
+}
+.grid__logs {
+  grid-area: logs;
+  min-height: 0;
+}
+
+/* Panel skeleton */
+.panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 14px 16px 12px;
+}
+.panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.panel__header--center {
+  justify-content: space-between;
+}
+.panel__header h2 {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(230, 235, 255, 0.65);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.panel__mark {
+  color: var(--plasma-500);
+  text-shadow: 0 0 10px rgba(0, 245, 255, 0.5);
+}
+.panel__sub {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--nebula-300);
+}
+
+/* Logs expanded mode */
+.grid--logs-expanded {
+  grid-template-rows: minmax(120px, 0.5fr) auto minmax(360px, 2fr);
+}
+
+@media (max-width: 1280px) {
+  main.grid {
+    grid-template-columns: 200px 1fr 360px;
+  }
+}
+@media (max-width: 1080px) {
+  main.grid {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto auto auto;
+    grid-template-areas:
+      "avatar"
+      "pipeline"
+      "vitals"
+      "conv"
+      "logs";
+  }
+}

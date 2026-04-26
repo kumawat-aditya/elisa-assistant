@@ -5,6 +5,15 @@ import pyaudio
 import numpy as np
 import time
 import warnings
+import sys
+import os as _os
+
+# Make the assistant/src package importable when this module is run directly
+sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
+try:
+    from session.websocket import ui_controller as _ui_controller
+except Exception:
+    _ui_controller = None
 
 # Suppress ALSA warnings
 warnings.filterwarnings("ignore")
@@ -128,6 +137,13 @@ def listen_for_wake_word(callback):
                 if score > 0.8 and (current_time - last_trigger_time > cooldown_seconds):
                     print(f"\nWake word detected! (score: {score:.2f})")
                     last_trigger_time = current_time
+
+                    if _ui_controller is not None:
+                        try:
+                            _ui_controller.set_pipeline_stage("wake_word", {"score": float(score)})
+                            _ui_controller.send_metric("wake_word_score", float(score), "")
+                        except Exception:
+                            pass
 
                     # Flush buffer by reading frames before stopping the stream
                     for _ in range(5):
