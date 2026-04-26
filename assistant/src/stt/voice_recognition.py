@@ -25,7 +25,7 @@ except ImportError:
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from session.websocket import create_ui_logger
+from session.websocket import create_ui_logger, ui_controller as _ui_controller
 
 # Create UI logger for this module
 ui_logger = create_ui_logger("VoiceRecognition")
@@ -268,6 +268,8 @@ def recognize_speech():
         ui_logger.log_info("Starting voice recording...")
         vad_record(audio_temp_path)
         ui_logger.log_success("Audio recorded successfully.")
+        # Advance pipeline to stt now that Whisper is about to run
+        _ui_controller.set_pipeline_stage("stt", {})
         ui_logger.set_state("processing")
         result = recognize_with_whisper_cpp(audio_temp_path)
         if result:
