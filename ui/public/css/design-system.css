@@ -202,27 +202,41 @@ body {
 }
 .topbar__brand {
   display: flex;
-  align-items: baseline;
-  gap: 10px;
-  font-family: var(--font-display);
+  align-items: center;
 }
-.brand-mark {
-  color: var(--plasma-500);
-  text-shadow: 0 0 12px rgba(0, 245, 255, 0.6);
+
+/* Logo images */
+.brand-img {
+  display: block;
+  object-fit: contain;
+  /* Screen blend removes the near-black background from the PNG,
+     leaving only the cyan icon and text visible over the glass topbar */
+  mix-blend-mode: screen;
+  /* Prevent layout shift while loading */
+  flex-shrink: 0;
 }
-.brand-name {
-  font-weight: 700;
-  letter-spacing: 0.18em;
+
+/* Full horizontal logo — desktop & tablet (≥600px) */
+.brand-img--full {
+  height: clamp(28px, 2.8vw, 46px);
+  width: auto;
+  max-width: clamp(140px, 16vw, 240px);
 }
-.brand-tag {
-  font-family: var(--font-mono);
-  font-size: clamp(8px, 0.6vw, 12px);
-  letter-spacing: 0.22em;
-  color: var(--nebula-300);
-  border: 1px solid rgba(139, 92, 246, 0.25);
-  padding: 2px 6px;
-  border-radius: 4px;
-  text-transform: uppercase;
+.brand-img--mini {
+  display: none;
+}
+
+/* Mini icon-only logo — mobile (<600px) */
+@media (max-width: 599px) {
+  .brand-img--full {
+    display: none;
+  }
+  .brand-img--mini {
+    display: block;
+    height: 32px;
+    width: 32px;
+    border-radius: 8px;
+  }
 }
 .topbar__center {
   display: flex;
