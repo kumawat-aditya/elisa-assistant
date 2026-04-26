@@ -2,50 +2,61 @@
 body {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 main.grid {
   position: relative;
   z-index: 1;
   flex: 1 1 auto;
+  min-height: 0;
   display: grid;
   grid-template-columns: 220px 1fr 420px;
-  grid-template-rows: minmax(280px, 1fr) auto minmax(280px, 1.2fr);
-  grid-template-areas:
-    "vitals avatar conv"
-    "vitals pipeline conv"
-    "logs   logs    logs";
+  grid-template-rows: minmax(180px, 1fr) minmax(120px, auto) minmax(
+      220px,
+      1.2fr
+    );
   gap: 14px;
   padding: 12px 14px 14px;
-  min-height: 0;
 }
 .grid__vitals {
   grid-area: vitals;
+  grid-column: 1;
+  grid-row: 1 / 3;
   min-height: 0;
   overflow: hidden;
 }
 .grid__avatar {
   grid-area: avatar;
+  grid-column: 2;
+  grid-row: 1;
   min-height: 0;
   overflow: hidden;
 }
 .grid__pipeline {
   grid-area: pipeline;
+  grid-column: 2;
+  grid-row: 2;
   min-height: 0;
 }
 .grid__conv {
   grid-area: conv;
+  grid-column: 3;
+  grid-row: 1 / 3;
   min-height: 0;
   overflow: hidden;
 }
 .grid__logs {
   grid-area: logs;
+  grid-column: 1 / 4;
+  grid-row: 3;
   min-height: 0;
+  overflow: hidden;
 }
-
 /* Panel skeleton */
 .panel {
+  position: relative;
   display: flex;
   flex-direction: column;
   min-height: 0;
