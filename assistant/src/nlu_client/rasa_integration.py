@@ -55,6 +55,9 @@ def process_command(command, sender="user1"):
                     text = extract_text_from_response(message["text"])
                     if text:
                         messages.append(text)
+                    # "continue" may live at the top level alongside "text"
+                    if message.get("continue"):
+                        continue_conversation = True
 
                 # Case 2: Response is inside "custom"
                 elif "custom" in message:
