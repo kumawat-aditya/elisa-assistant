@@ -22,7 +22,7 @@ services:
     image: rasa/duckling:0.2.0.2-r3
     container_name: elisa-duckling
     ports:
-      - "8000:8000"
+      - "8022:8000"
     restart: unless-stopped
     networks:
       - elisa-network
