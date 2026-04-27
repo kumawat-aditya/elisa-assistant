@@ -400,7 +400,6 @@ nlu:
       - transcribe [Thank you for your patience and support.](text)
       - dictate this [I will send the revised document tonight.](text)
       - type [The coffee machine needs more water.](text)
-      - write [Reminder: submit the reimbursement form.](text)
       - input [The second option looks cleaner and simpler.](text)
       - copy this text [Please attach the updated screenshot.](text)
       - type [I left the keys on the dining table.](text)
@@ -414,7 +413,6 @@ nlu:
       - input this sentence [The backup finished at midnight.](text)
       - copy [I am walking to the station now.](text)
       - type [The document has been uploaded to the shared folder.](text)
-      - enter [Please remind me to follow up next week.](text)
 
   - intent: meaning_of
     examples: |
