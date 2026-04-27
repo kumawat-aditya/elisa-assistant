@@ -400,7 +400,7 @@ echo "==========================================================================
 echo ""
 echo "  Services:"
 echo "    • TTS Docker        : http://localhost:5002"
-echo "    • Duckling Docker   : http://localhost:8000"
+echo "    • Duckling Docker   : http://localhost:8022"
 echo "    • Logic Layer       : http://localhost:8021"
 echo "    • NLU Server        : http://localhost:5005"
 echo "    • NLU Actions       : http://localhost:5055"

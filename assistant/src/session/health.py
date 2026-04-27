@@ -16,7 +16,7 @@ SERVICES: list[Tuple[str, str]] = [
     ("rasa", "http://localhost:5005/status"),
     ("logic", "http://localhost:8021/health"),
     ("tts", "http://localhost:5002/api/voices"),
-    ("duckling", "http://localhost:8000/"),
+    ("duckling", "http://localhost:8022/"),
 ]
 
 POLL_SECONDS = 10
