@@ -1,7 +1,10 @@
+import logging
 import webbrowser
 import wikipedia
 import os
 import sys
+
+logger = logging.getLogger(__name__)
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -183,7 +186,7 @@ def list_reminders():
             if reminder_time > now:
                 active_reminders[task] = time_str
         except Exception as e:
-            print(f"[Reminder Check] Failed to parse time for {task}: {e}")
+            logger.error("Failed to parse time for %s: %s", task, e)
 
 
     # Overwrite with filtered active ones

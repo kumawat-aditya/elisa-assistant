@@ -1,4 +1,7 @@
+import logging
 import requests
+
+logger = logging.getLogger(__name__)
 
 LOGIC_URL = "http://localhost:8021/process"
 
@@ -17,8 +20,7 @@ def process(action, data=""):
         response_data = response.json()
 
         if response_data:
-            print("======================= response data =======================")
-            print(response_data)
+            logger.debug("Logic layer response: %s", response_data)
 
             text = [response_data.get("text", "")]
             continue_conversation = response_data.get("continue", False)
@@ -28,6 +30,6 @@ def process(action, data=""):
             return {"text": "No response from logic layer.", "continue": False}
 
     except requests.exceptions.RequestException as e:
-        print(f"Error sending request to Rasa: {e}")
+        logger.error("Error sending request to logic layer: %s", e)
         return {"text": "I'm having trouble connecting to the LOGIC layer.", "continue": False}
 

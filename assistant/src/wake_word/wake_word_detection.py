@@ -1,3 +1,5 @@
+import logging
+
 import openwakeword
 from openwakeword.model import Model
 
@@ -7,6 +9,8 @@ import time
 import warnings
 import sys
 import os as _os
+
+logger = logging.getLogger(__name__)
 
 # Make the assistant/src package importable when this module is run directly
 sys.path.insert(0, _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__))))
@@ -75,7 +79,7 @@ def find_working_input_device(p):
 
 
 def listen_for_wake_word(callback):
-    print("Initializing wake word detection with open wake word...")
+    logger.info("Initializing wake word detection...")
     last_trigger_time = 0
     cooldown_seconds = 3.0  # Increased cooldown to prevent re-triggering from TTS audio
 
@@ -91,9 +95,9 @@ def listen_for_wake_word(callback):
             
             if device_index is not None:
                 device_info = p.get_device_info_by_index(device_index)
-                print(f"Using audio device [{device_index}]: {device_info['name']}")
+                logger.debug("Using audio device [%d]: %s", device_index, device_info['name'])
             else:
-                print("Using default audio device")
+                logger.debug("Using default audio device")
             
             # Open stream with found device (or default if None)
             stream = p.open(format=FORMAT,
@@ -103,7 +107,7 @@ def listen_for_wake_word(callback):
                             input_device_index=device_index,
                             frames_per_buffer=CHUNK)
 
-            print("Listening for wake word...")
+            logger.info("Listening for wake word...")
             
             # Wait a bit after restarting to let TTS audio settle
             # This prevents the wake word model from picking up residual TTS audio
@@ -120,7 +124,7 @@ def listen_for_wake_word(callback):
                 try:
                     data = stream.read(CHUNK, exception_on_overflow=False)
                 except Exception as e:
-                    print(f"Stream read error: {e}")
+                    logger.warning("Stream read error: %s", e)
                     continue
 
                 frame = np.frombuffer(data, dtype=np.int16)
@@ -130,12 +134,12 @@ def listen_for_wake_word(callback):
                 
                 # Debug: Show scores above a minimum threshold
                 if score > 0.3:
-                    print(f"  [Wake word score: {score:.2f}]", end="\r")
+                    logger.debug("Wake word score: %.2f", score)
 
                 current_time = time.time()
                 # Using higher threshold (0.8) to reduce false positives
                 if score > 0.8 and (current_time - last_trigger_time > cooldown_seconds):
-                    print(f"\nWake word detected! (score: {score:.2f})")
+                    logger.info("Wake word detected! (score: %.2f)", score)
                     last_trigger_time = current_time
 
                     if _ui_controller is not None:
@@ -174,10 +178,10 @@ def listen_for_wake_word(callback):
                     break
 
         except KeyboardInterrupt:
-            print("\nStopped by user.")
+            logger.info("Wake word detection stopped by user.")
             break
         except Exception as e:
-            print(f"Error during wake word detection: {e}")
+            logger.error("Error during wake word detection: %s", e)
             time.sleep(1)  # Wait before retry
         finally:
             # Ensure cleanup

@@ -1,4 +1,7 @@
+import logging
 import requests
+
+logger = logging.getLogger(__name__)
 
 def fetch_weather(location: str) :
     """Fetches weather data from OpenWeatherMap API"""
@@ -19,5 +22,5 @@ def get_user_location() :
             data = response.json()
             return data.get("city", "Unknown")
     except Exception as e:
-        print(f"Error fetching user location: {e}")
+        logger.error("Error fetching user location: %s", e)
     return None

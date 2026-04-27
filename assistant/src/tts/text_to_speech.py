@@ -1,9 +1,12 @@
+import logging
 import sys
 import os
 import requests
 import subprocess
 import wave
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 # Try to import sounddevice for PipeWire/PulseAudio compatible playback
 try:
@@ -66,7 +69,7 @@ def play_wav_file(filepath):
                 sd.wait()
                 return True
         except Exception as e:
-            print(f"sounddevice playback failed: {e}")
+            logger.warning("sounddevice playback failed: %s", e)
     
     # Method 4: Try aplay (ALSA)
     try:
@@ -82,9 +85,9 @@ def play_wav_file(filepath):
             sa.WaveObject.from_wave_file(filepath).play().wait_done()
             return True
         except Exception as e:
-            print(f"simpleaudio playback failed: {e}")
+            logger.warning("simpleaudio playback failed: %s", e)
     
-    print(f"⚠️ No audio playback method available for {filepath}")
+    logger.warning("No audio playback method available for %s", filepath)
     return False
 
 
@@ -114,9 +117,9 @@ def speak_response(response):
         play_wav_file(output_file)
 
     except requests.exceptions.RequestException as e:
-        print(f"Error communicating with TTS server: {e}")
+        logger.error("Error communicating with TTS server: %s", e)
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logger.error("Unexpected TTS error: %s", e)
 
 if __name__ == "__main__":
     # Example usage
