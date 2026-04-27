@@ -98,324 +98,638 @@ nlu:
 
   - intent: repeat_after_me
     examples: |
-      - can you repeat [this is crazy](query)
+      - can you repeat [this is just a test](query)
+      - repeat after me [I will arrive in ten minutes](query)
       - can you repeat [banti bhosadi wala hai](query)
       - Repeat after me [Priya tu pagal hai kya gawaar ladki](query)
       - say [hello world](query)
-      - please repeat [what I just said](query)
-      - could you say [you are my best friend](query)
-      - echo [you are doing great](query)
-      - I want you to repeat [everything is okay](query)
-      - repeat this for me: [stay positive](query)
-      - would you mind saying [have a nice day](query)
-      - mimic me and say [I love coding](query)
-      - repeat what I say: [this is fun](query)
-      - say out loud [you got this](query)
-      - please say [good job](query)
-      - I need you to repeat [we're on the same page](query)
-      - say after me [I will not quit](query)
-      - repeat this sentence [this is the way](query)
-      - say this for me: [you matter](query)
-      - just say [never give up](query)
-      - say these words [focus and finish](query)
-      - repeat this: [keep pushing forward](query)
-      - repeat exactly this [believe in yourself](query)
-      - read this out loud [you can do it](query)
-      - say this line [consistency is key](query)
-      - please echo the phrase [nothing is impossible](query)
-      - repeat after me [I am confident](query)
-      - can you say the phrase [I will succeed](query)
-      - I want you to say [patience and persistence](query)
-      - say the following [work hard, dream big](query)
-      - repeat back to me [I trust the process](query)
-      - Repeat after me. [Bunty, are you crazy](query)?
+      - please say [the meeting starts at noon](query)
+      - echo [I finished the report](query)
+      - read this aloud [your package has arrived](query)
+      - repeat [remember to lock the door](query)
+      - say exactly [focus on the next step](query)
+      - can you say [I appreciate your help](query)
+      - speak [dinner is ready](query)
+      - repeat these words [practice makes progress](query)
+      - say out loud [I need a short break](query)
+      - repeat this sentence [the server is running smoothly](query)
+      - please echo [we can review it tomorrow](query)
+      - say for me [thanks for waiting](query)
+      - repeat back [the backup completed successfully](query)
+      - can you read [please call me when you arrive](query)
+      - say the phrase [consistency beats intensity](query)
+      - repeat what I say [the keys are on the table](query)
+      - speak this [I am heading to the office](query)
+      - could you repeat [the file has been uploaded](query)
+      - say clearly [I will finish this tonight](query)
+      - echo this [the weather looks pleasant today](query)
+      - repeat exactly [do not forget the charger](query)
+      - read aloud [we should start with the agenda](query)
+      - say [my train leaves at seven](query)
+      - please repeat [the document needs one more review](query)
+      - repeat for me [I will send the update soon](query)
+      - can you say this [quality matters more than speed](query)
+      - say the following [turn left at the next signal](query)
+      - repeat [the code passed all the tests](query)
+      - echo back [I placed the book on the shelf](query)
+      - speak aloud [tomorrow will be a busy day](query)
+      - repeat this for me [the appointment is confirmed](query)
+      - say these words [calm minds make better decisions](query)
+      - can you echo [we are ready to begin](query)
+      - repeat the line [there is coffee in the kitchen](query)
+      - say this sentence [please review the latest draft](query)
+      - read this sentence [the application is installing now](query)
+      - repeat after me [small steps still move you forward](query)
+      - please say [the call has been rescheduled](query)
+      - echo the sentence [I saved the file in downloads](query)
+      - say back [the lights are off now](query)
+      - repeat verbatim [the budget meeting starts at three](query)
+      - read out [we should leave a little earlier](query)
+      - say the message [I will check that after lunch](query)
+      - repeat this phrase [keep the feedback specific](query)
+      - can you say out loud [the timer is set for five minutes](query)
+      - repeat after me [the printer is out of paper](query)
+      - please repeat this [I am ready for the next task](query)
 
   - intent: current_date_time
     examples: |
-      - what is the current date and time?
-      - tell me the date and time
-      - what time is it?
-      - what is today's date?
+      - what time is it right now
+      - tell me the current time
+      - can you tell me the time
+      - what's the time right now
+      - what is the current date
+      - tell me today's date
+      - what day is it today
+      - can you tell me today's day and date
       - give me the current date and time
-      - can you tell me the date and time?
-      - what is the time right now?
-      - what day is it today?
-      - what's the current date?
-      - can you tell me the current time?
+      - what's today's date and time
+      - I need the current time
+      - could you tell me the date right now
+      - what's the date today
+      - what day of the week is it
+      - let me know the time
+      - tell me what time it is now
+      - what is the date today
+      - give me today's date
+      - can you give me the current date
+      - what's the day today
+      - tell me the date and time please
+      - I want to know the current date and time
+      - current time please
+      - current date please
+      - what time do you have
+      - can you check the time for me
+      - could you tell me the day today
+      - tell me the day and date
+      - what's the exact time
+      - give me the time now
+      - what is today's full date
+      - what's the date on the calendar today
+      - can you tell me the month and date
+      - what's the time on the clock
+      - tell me the local time
+      - can you give me the time and day
+      - what date is it today exactly
+      - I need today's day
+      - what is the current day
+      - what's today's full date and time
+      - let me know the current day and time
+      - tell me the date, day, and time
+      - can you say the current date out loud
+      - what is the time where we are now
+      - I want today's date
+      - what's the present time
+      - what's the present date
+      - can you tell me the time and today's date
+      - what day and time is it right now
+      - please tell me the date and time now
 
   - intent: open_app
     examples: |
-      - Open [Chrome](app_name)
-      - Launch [Firefox](app_name)
-      - Start [Notepad](app_name)
-      - Run [Spotify](app_name)
-      - Run [Settings](app_name)
-      - Execute [Terminal](app_name)
-      - Boot up [Discord](app_name)
-      - Open [VLC Media Player](app_name)
-      - Launch [Calculator](app_name)
-      - Start [Sublime Text](app_name)
-      - Activate [Teams](app_name)
-      - Initiate [Outlook](app_name)
-      - Bring up [Edge Browser](app_name)
-      - Fire up [Android Studio](app_name)
-      - Get [VS Code](app_name) running
-      - Open [Photoshop](app_name) now
-      - Could you start [Zoom](app_name)?
-      - I need [PyCharm](app_name) opened
-      - Please launch [Slack](app_name)
-      - Execute [Telegram](app_name) for me
-      - Turn on [File Explorer](app_name)
-      - Let’s start [Audacity](app_name)
-      - Open up [Thunderbird](app_name)
+      - open [Chrome](app_name)
+      - launch [Firefox](app_name)
+      - start [Calculator](app_name)
+      - run [Spotify](app_name)
+      - open [VS Code](app_name)
+      - launch [Slack](app_name)
+      - start [Terminal](app_name)
+      - open [Discord](app_name)
+      - please open [Notion](app_name)
+      - can you launch [Telegram](app_name)
+      - open [File Manager](app_name)
+      - start [Steam](app_name)
+      - run [System Settings](app_name)
+      - fire up [PyCharm](app_name)
+      - bring up [LibreOffice Writer](app_name)
+      - open [GIMP](app_name)
+      - launch [Thunderbird](app_name)
+      - start [Zoom](app_name)
+      - open [Microsoft Edge](app_name)
+      - run [VLC Media Player](app_name)
+      - open the [Calendar](app_name)
+      - can you start [OBS Studio](app_name)
+      - launch [Postman](app_name)
+      - open [Android Studio](app_name)
+      - bring up [IntelliJ IDEA](app_name)
+      - start [Photos](app_name)
+      - run [Remmina](app_name)
+      - open [Files](app_name)
+      - launch [Audacity](app_name)
+      - please start [Google Chrome](app_name)
+      - open [Settings](app_name) for me
+      - can you open [Blender](app_name)
+      - launch [Kdenlive](app_name)
+      - run [WhatsApp](app_name)
+      - open [Bitwarden](app_name)
+      - start [Visual Studio Code](app_name)
+      - please open [System Monitor](app_name)
+      - bring up [gedit](app_name)
+      - launch [Firefox Developer Edition](app_name)
+      - open [Notes](app_name)
+      - run [Transmission](app_name)
+      - start [VirtualBox](app_name)
+      - open [Cheese](app_name)
+      - launch [LibreOffice Calc](app_name)
+      - please run [Nautilus](app_name)
+      - open [SimpleScreenRecorder](app_name)
+      - start [Okular](app_name)
+      - can you launch [KeePassXC](app_name)
+      - bring up [Evolution](app_name)
+      - open [Docker Desktop](app_name)
 
   - intent: search_firefox
     examples: |
-      - Search [Python tutorials](query)
-      - Find articles about [machine learning](query)
-      - Google [best laptops for programming](query)
-      - Look up [how to cook pasta](query)
-      - Show me results for [latest AI news](query)
-      - Research [cloud computing trends](query)
-      - Find [open-source software](query)
-      - Can you search for [new programming frameworks](query)?
-      - Search for [ways to improve coding skills](query)
-      - I need info on [cheap gaming laptops](query)
-      - Google [best Python libraries for data science](query)
-      - Find articles on [cybersecurity trends](query)
-      - Can you look up [quantum computing basics](query)?
-      - Research [how to invest in stocks](query)
-      - Look for [upcoming Marvel movies](query)
-      - Look for [interstellar movie](query) on browser.
-      - Tell me about [history of Linux](query)
-      - Fetch results for [deep learning models](query)
-      - Search for [Curse of Robert Doll movie](query)
-      - Find [Inception movie review](query)
-      - Look up [best horror movies 2023](query)
-      - Google [new sci-fi movies this year](query)
-      - Show me details on [Oppenheimer movie](query)
-      - look up for [the hounted house movie](query)
-      - search for [the conjuring movie](query)
-      - find [owner of spaceX] (query)
+      - search for [best Python debugging tips](query)
+      - look up [weather in Tokyo this week](query)
+      - google [how to set up a cron job](query)
+      - find [restaurants near me open now](query)
+      - search the web for [Rasa Duckling relative time examples](query)
+      - browse for [latest NVIDIA driver for Ubuntu](query)
+      - look up [how to write unit tests in pytest](query)
+      - search [best mechanical keyboards for coding](query)
+      - find information about [solar eclipse 2026 dates](query)
+      - google [affordable noise cancelling headphones](query)
+      - search for [how to train a custom Rasa model](query)
+      - look up [best productivity apps for Linux](query)
+      - find [movie times for Dune](query)
+      - search the browser for [how to use Docker Compose profiles](query)
+      - google [simple vegetarian dinner recipes](query)
+      - look up [upcoming Champions League fixtures](query)
+      - search [how to fix a detached HEAD in git](query)
+      - find [Python datetime timezone examples](query)
+      - browse for [best budget microphones for streaming](query)
+      - google [how to optimize FastAPI performance](query)
+      - search for [JavaScript debounce explained](query)
+      - look up [best monitors for programming](query)
+      - find [news about SpaceX launches](query)
+      - search [how to install NVIDIA CUDA on Linux](query)
+      - google [top travel destinations in Japan](query)
+      - look up [healthy breakfast ideas high protein](query)
+      - search the web for [latest stable version of Ubuntu](query)
+      - find [how to recover deleted files on Linux](query)
+      - search [best note taking apps for students](query)
+      - google [Python list comprehension examples](query)
+      - look up [how to set reminders in Rasa actions](query)
+      - find [best open source password managers](query)
+      - search for [beginner strength training plan](query)
+      - browse [how to create a systemd service](query)
+      - look up [current gold price in India](query)
+      - google [how to build a portfolio website](query)
+      - search [best wireless mouse for productivity](query)
+      - find [troubleshooting websocket connection refused](query)
+      - search for [how to make cold coffee at home](query)
+      - look up [best sci-fi movies of the last decade](query)
+      - browse for [how to use tmux sessions](query)
+      - search [latest news on artificial intelligence regulation](query)
+      - google [difference between TCP and UDP](query)
+      - find [how to resize a partition on Ubuntu](query)
+      - search the internet for [best books on system design](query)
+      - look up [simple stretching routine for office workers](query)
+      - search [how to deploy FastAPI with Nginx](query)
+      - google [the history of the Linux kernel](query)
+      - find [top VS Code extensions for Python](query)
+      - search for [how to parse natural language dates in Python](query)
 
   - intent: create_file
     examples: |
-      - Create a file [report.txt](file_name)
-      - Generate a file named [todo_list.csv](file_name)
-      - Make a document called [notes.docx](file_name)
-      - Produce a file [summary.pdf](file_name)
-      - Construct a file named [budget.xlsx](file_name)
-      - Start a new file [project.pptx](file_name)
-      - Create [script.py](file_name)
-      - Make a new document [index.html](file_name)
-      - Generate a text file [readme.md](file_name)
-      - Start a spreadsheet [data.csv](file_name)
-      - Create a markdown file called [notes.md](file_name)
-      - Open a configuration file [config.json](file_name)
-      - I need a LaTeX file [paper.tex](file_name)
-      - Make a log file named [error.log](file_name)
-      - Generate a database file [database.sqlite](file_name)
-      - Let’s create a YAML file [settings.yml](file_name)
-      - Start a new JSON file [data.json](file_name)
-      - Open up a CSS file [styles.css](file_name)
-      - Produce an XML file [feed.xml](file_name)
+      - create a file named [notes.txt](file_name)
+      - make a new file called [report.md](file_name)
+      - create [todo.txt](file_name)
+      - generate a file named [budget.xlsx](file_name)
+      - start a new document [meeting-notes.docx](file_name)
+      - create [script.py](file_name)
+      - make a file [index.html](file_name)
+      - open a new file called [draft.txt](file_name)
+      - generate [config.json](file_name)
+      - create a markdown file [readme.md](file_name)
+      - make a file named [app.js](file_name)
+      - create [styles.css](file_name)
+      - start a file [presentation.pptx](file_name)
+      - make a spreadsheet [expenses.csv](file_name)
+      - create [data.yaml](file_name)
+      - open a new text file [ideas.txt](file_name)
+      - create a document called [proposal.docx](file_name)
+      - make [main.py](file_name) for me
+      - generate [server.log](file_name)
+      - create a file named [shopping-list.txt](file_name)
+      - start [analysis.ipynb](file_name)
+      - make a new file [docker-compose.yml](file_name)
+      - create [requirements.txt](file_name)
+      - open [notes.md](file_name)
+      - create [invoice.pdf](file_name)
+      - make a config file [settings.ini](file_name)
+      - start a new file named [journal.txt](file_name)
+      - create [landing-page.html](file_name)
+      - make [test_cases.csv](file_name)
+      - generate [summary.txt](file_name)
+      - create [routes.py](file_name)
+      - make a file called [credentials.json](file_name)
+      - start [design-spec.md](file_name)
+      - create a new file [backup.sql](file_name)
+      - make [resume.docx](file_name)
+      - open a blank file [ideas.md](file_name)
+      - generate [diagram.drawio](file_name)
+      - create [notes-2026-04-27.txt](file_name)
+      - make a new document [letter.docx](file_name)
+      - create [package.json](file_name)
+      - start a file called [tailwind.config.js](file_name)
+      - make [inventory.xlsx](file_name)
+      - create [api-schema.yaml](file_name)
+      - open a new file [draft-email.txt](file_name)
+      - create [photo-list.csv](file_name)
+      - make [compose.override.yml](file_name)
+      - generate [terraform.tfvars](file_name)
+      - create a file named [roadmap.md](file_name)
+      - start [metrics.log](file_name)
+      - create [weekly-plan.txt](file_name)
 
   - intent: type_what_i_say
     examples: |
-      - Type [Hello World](text)
-      - Type what I say. [Hey, how are you?](text)
-      - Type this: [I love coding](text)
-      - Type [Life is beautiful](text)
-      - Type [Hello how are you](text)
-      - Write [Buy milk and eggs](text)
-      - Write this: [Meeting at 3 PM](text)
-      - Write this: [hey gaurav how are you](text)
-      - Copy [Reminder to call mom](text)
-      - Copy this: [Finish the report by tomorrow](text)
-      - Copy this: [how is your day](text)
-      - Enter [Learning never stops](text)
-      - Enter this: [Happy birthday to you](text)
-      - Enter this: [how have you been kunal](text)
-      - Dictate [See you at the event](text)
-      - Dictate this: [Let's meet at 5 PM](text)
-      - Dictate this: [hello banti what are you doing](text)
-      - Log [Check the email for details](text)
-      - Log this: [Call the client after lunch](text)
-      - Log this: [hey what's up](text)
-      - Jot [The quick brown fox jumps over the lazy dog](text)
-      - Jot this down: [Code review is scheduled for Monday](text)
-      - Jot this down: [hey bro is everything okey](text)
-      - Transcribe [Success comes with hard work](text)
-      - Transcribe this: [Always stay positive](text)
-      - Input [Coffee break at 4 PM](text)
-      - Input this: [Server restarted successfully](text)
-      - Take note: [Submit the assignment before noon](text)
-      - Take note of this: [Remember to book flight tickets](text)
-      - Type [Mangoes are my favorite fruit](text)
-      - Type this [Where is my laptop](text)
-      - Type this [Hi gaurav, how are you](text)
-      - Write [Did you complete the assignment](text)
-      - Write this [Let's go out for dinner](text)
-      - Enter [Check the system logs](text)
-      - Enter this [Meeting rescheduled to 6 PM](text)
-      - Copy [Chocolate cake recipe](text)
-      - Copy this [Update the software to the latest version](text)
-      - Dictate [Call John after the meeting](text)
-      - Dictate this [Sunsets are beautiful at the beach](text)
+      - type [Hello team, the build passed successfully.](text)
+      - type this [Please review the pull request before noon.](text)
+      - write [I will be there in ten minutes.](text)
+      - enter [Meeting moved to 3:30 PM.](text)
+      - type what I say [Remember to bring the charger.](text)
+      - write this down [The package arrived this morning.](text)
+      - input [Let's catch up after lunch.](text)
+      - copy [The server restarted without errors.](text)
+      - type [Buy milk, bread, and eggs.](text)
+      - enter this [Draft one is ready for feedback.](text)
+      - write [Please send me the invoice today.](text)
+      - type [The password reset email has been sent.](text)
+      - jot down [Client call scheduled for Friday at 11.](text)
+      - transcribe [I appreciate your quick response.](text)
+      - type [Can we move the demo to Thursday?](text)
+      - write this [Deployment completed successfully at 09:14.](text)
+      - input this [The design needs a little more spacing.](text)
+      - copy this [Do not forget to back up the database.](text)
+      - type [Lunch with Arjun at 1 PM.](text)
+      - enter [I finished the first draft.](text)
+      - write [Please approve the latest expense sheet.](text)
+      - type this sentence [The weather is pleasant this evening.](text)
+      - jot [Your appointment is confirmed for tomorrow.](text)
+      - dictate [Let's revisit this after the meeting.](text)
+      - type [Need to renew the domain this week.](text)
+      - write [The app is ready for user testing.](text)
+      - input [Check the logs for authentication errors.](text)
+      - copy [Our stand-up starts at 9:15 every day.](text)
+      - type this [I saved the file in the downloads folder.](text)
+      - enter [Please call me when you leave home.](text)
+      - write this note [The printer is out of paper.](text)
+      - type [We should merge the branch after QA signs off.](text)
+      - transcribe [Thank you for your patience and support.](text)
+      - dictate this [I will send the revised document tonight.](text)
+      - type [The coffee machine needs more water.](text)
+      - write [Reminder: submit the reimbursement form.](text)
+      - input [The second option looks cleaner and simpler.](text)
+      - copy this text [Please attach the updated screenshot.](text)
+      - type [I left the keys on the dining table.](text)
+      - enter this message [The cab will arrive in five minutes.](text)
+      - write [The API response time looks much better now.](text)
+      - type [Could you share the final slide deck with me?](text)
+      - jot down [We need one more round of regression testing.](text)
+      - dictate [The conference room is booked for two hours.](text)
+      - type this [I will review the proposal after dinner.](text)
+      - write [Please mute yourself when you join the call.](text)
+      - input this sentence [The backup finished at midnight.](text)
+      - copy [I am walking to the station now.](text)
+      - type [The document has been uploaded to the shared folder.](text)
+      - enter [Please remind me to follow up next week.](text)
 
   - intent: meaning_of
     examples: |
-      - What is [black hole](words)?
-      - What is [machine learning](words)?
-      - What is [blockchain](words)?
-      - What is [deep learning](words)?
-      - What is [serverless computing](words)?
-      - What is [wine](words)?
-      - What is [computer](words)?
-      - Define [artificial intelligence](words)
-      - Define [cybersecurity](words)
-      - Define [quantum mechanics](words)
-      - Define [data mining](words)
-      - Define [augmented reality](words)
-      - Define [molecule](words)
-      - Explain [event horizon](words)
-      - Explain [cloud computing](words)
-      - Explain [computer vision](words)
-      - Explain [edge computing](words)
-      - Explain [metaverse](words)
-      - What does [neural network](words) mean?
-      - What does [cryptography](words) mean?
-      - What does [natural language processing](words) mean?
-      - What does [virtual reality](words) mean?
-      - What does [big data](words) mean?
-      - What does [reactor](words) mean?
-      - Tell me about [artificial intelligence](words)
-      - Tell me about [serverless computing](words)
-      - Tell me about [data mining](words)
-      - Tell me about [augmented reality](words)
-      - Tell me about [machine learning](words)
-      - Can you explain [quantum mechanics](words)?
-      - Can you explain [cloud computing](words)?
-      - Can you explain [blockchain](words)?
-      - Can you explain [deep learning](words)?
-      - Can you explain [cybersecurity](words)?
-      - Do you know about [facebook] (words)
-      - Do you know about [popsicles] (words)
-      - Do you know about [mark zukerberg] (words)
-      - Do you know about [Narendra modi] (words)
-      - Do you know about [bhurj khalifa] (words)
+      - what is [machine learning](words)
+      - define [blockchain](words)
+      - explain [quantum computing](words)
+      - what does [natural language processing](words) mean
+      - tell me about [cloud computing](words)
+      - what is [docker](words)
+      - define [microservices](words)
+      - explain [event loop](words)
+      - what is [cybersecurity](words)
+      - what does [data pipeline](words) mean
+      - tell me the meaning of [artificial intelligence](words)
+      - can you explain [neural network](words)
+      - what is [edge computing](words)
+      - define [zero trust](words)
+      - explain [virtual memory](words)
+      - what is [object oriented programming](words)
+      - what does [serverless architecture](words) mean
+      - tell me about [distributed systems](words)
+      - explain [containerization](words)
+      - what is [computer vision](words)
+      - define [API gateway](words)
+      - can you tell me about [semantic search](words)
+      - what is [encryption](words)
+      - explain [multi factor authentication](words)
+      - what does [latency](words) mean
+      - define [observability](words)
+      - tell me about [vector database](words)
+      - what is [predictive analytics](words)
+      - explain [data warehouse](words)
+      - what does [continuous integration](words) mean
+      - define [technical debt](words)
+      - what is [Git rebase](words)
+      - explain [load balancing](words)
+      - tell me what [DevOps](words) means
+      - what is [Kubernetes](words)
+      - define [TCP handshake](words)
+      - explain [DNS](words)
+      - what does [open source](words) mean
+      - tell me about [time complexity](words)
+      - what is [machine vision](words)
+      - explain [prompt engineering](words)
+      - define [message queue](words)
+      - what does [caching](words) mean
+      - tell me about [regression testing](words)
+      - what is [functional programming](words)
+      - explain [garbage collection](words)
+      - define [firewall](words)
+      - what does [database sharding](words) mean
+      - can you explain [reinforcement learning](words)
+      - what is [public key cryptography](words)
 
   - intent: weather_update
     examples: |
-      - What's the weather like?
-      - How's the weather today?
-      - Tell me the weather.
-      - What's the temperature outside?
-      - Is it going to rain today?
-      - Is it sunny right now?
-      - Do I need an umbrella?
-      - How's the weather looking?
-      - What's the forecast for today?
-      - Will it be hot today?
-      - Is it cold outside?
-      - Check the weather for me.
-      - What's the weather report?
-      - Any rain coming today?
-      - Tell me if it's going to snow.
-      - Is it windy today?
-      - Give me a weather update.
-      - How warm is it outside?
-      - Is the weather nice today?
-      - Should I take a jacket?
+      - what's the weather like today
+      - how's the weather right now
+      - tell me the weather forecast
+      - what's the temperature outside
+      - is it going to rain today
+      - do I need an umbrella today
+      - how warm is it outside
+      - what's the weather this afternoon
+      - give me today's weather update
+      - can you check the weather for me
+      - is it sunny outside right now
+      - will it be cold tonight
+      - what's the forecast for tomorrow
+      - how does the weather look this evening
+      - tell me if it's windy today
+      - is there any chance of rain later
+      - should I carry a jacket today
+      - what's the weather like in Delhi
+      - how's the weather in Mumbai today
+      - tell me the temperature in Bangalore
+      - is it raining in London right now
+      - what's the forecast in New York
+      - how cold is it in Toronto today
+      - give me the weather in Tokyo
+      - what is the weather in Jaipur this morning
+      - how hot is it in Dubai today
+      - do I need an umbrella in Kolkata
+      - what's the weather like in San Francisco
+      - tell me today's weather in Chennai
+      - will it rain in Hyderabad tonight
+      - check the weather in Pune for me
+      - what's the temperature in Berlin right now
+      - is it cloudy in Paris today
+      - how's the weather looking in Singapore
+      - tell me whether it's humid today
+      - is the weather pleasant this evening
+      - what's the outdoor temperature now
+      - give me a quick weather report
+      - what does the weather look like tomorrow morning
+      - is it going to be windy in Ahmedabad
+      - do I need a coat today
+      - how is the weather around here today
+      - tell me if it's going to snow
+      - what's the current weather update
+      - is it hot outside this afternoon
+      - check whether it will rain tomorrow
+      - what's the weather for the weekend
+      - tell me the forecast for tonight
+      - is the weather clear right now
+      - can you give me a weather summary for today
 
   - intent: set_reminder
     examples: |
-      - remind me to [call mom](task_name) at [6](time)
-      - remind me to [take the medicine](task_name) at [9 am](time)
-      - remind me to [water the plants](task_name) in [10 minutes](time)
-      - set a reminder to [pay the electricity bill](task_name) tomorrow at [8](time)
-      - remind me to [do my homework](task_name) at [4:30](time)
-      - can you remind me to [book the flight tickets](task_name) at [11 pm](time)
-      - remind me to [check the stock market](task_name) in [2 hours](time)
-      - I need a reminder to [go for a walk](task_name) at [6:15](time)
-      - remind me about [yoga class](task_name) tomorrow morning at [7](time)
-      - set a reminder for [zoom call with team](task_name) at [3 pm](time)
-      - schedule a reminder to [take out the trash](task_name) at [8:45](time)
-      - make a reminder to [meet Riya](task_name) at [5](time)
-      - remind me to [call the bank](task_name) in [45 minutes](time)
-      - help me remember to [submit the assignment](task_name) at [midnight](time)
-      - remind me about [coding session](task_name) in [1 hour](time)
-      - please remind me to [reply to the emails](task_name) at [2:15](time)
-      - remind me to [feed the cat](task_name) every day at [9 am](time)
-      - I need to be reminded to [get groceries](task_name) at [7:30 pm](time)
-      - tell me when it's time to [start cooking](task_name) at [6 pm](time)
-      - add a reminder to [check for updates](task_name) in [20 minutes](time)
+      - remind me to [take my medicine](task_name) in [5 minutes](time)
+      - remind me to [call mom](task_name) at [6 pm](time)
+      - set a reminder to [join the team meeting](task_name) at [3:30 pm](time)
+      - remind me to [pay the electricity bill](task_name) tomorrow at [8 am](time)
+      - please remind me to [water the plants](task_name) in [20 minutes](time)
+      - set a reminder for [submit the assignment](task_name) at [11 pm](time)
+      - remind me to [leave for the airport](task_name) at [4:15 am](time)
+      - can you remind me to [call the bank](task_name) in [45 minutes](time)
+      - remind me to [start cooking dinner](task_name) at [7 pm](time)
+      - add a reminder to [take the laundry out](task_name) in [1 hour](time)
+      - remind me to [book the dentist appointment](task_name) tomorrow at [10 am](time)
+      - set a reminder to [send the status update](task_name) at [5 pm](time)
+      - remind me to [check the oven](task_name) in [15 minutes](time)
+      - I need a reminder to [attend yoga class](task_name) at [6:30 am](time)
+      - remind me to [pick up the parcel](task_name) at [1 pm](time)
+      - can you set a reminder for [review the contract](task_name) tomorrow at [2 pm](time)
+      - remind me to [take a short walk](task_name) in [30 minutes](time)
+      - add a reminder to [call Riya](task_name) at [8:45 pm](time)
+      - remind me to [join the interview](task_name) at [9 am](time)
+      - set a reminder for [buy groceries](task_name) in [2 hours](time)
+      - remind me to [check the stock market](task_name) at [9:15 am](time)
+      - remind me to [feed the cat](task_name) at [8 am](time)
+      - can you remind me to [reply to the client email](task_name) in [10 minutes](time)
+      - please set a reminder to [leave home](task_name) at [7:20 am](time)
+      - remind me to [call dad](task_name) tomorrow at [6:45 pm](time)
+      - set a reminder for [submit the expense sheet](task_name) at [4 pm](time)
+      - remind me to [charge the laptop](task_name) in [25 minutes](time)
+      - I want a reminder to [join the webinar](task_name) at [5:30 pm](time)
+      - remind me to [pick up Aarav from school](task_name) at [2:45 pm](time)
+      - set a reminder to [call the plumber](task_name) tomorrow at [11:30 am](time)
+      - remind me to [check on the soup](task_name) in [12 minutes](time)
+      - remind me to [start the presentation](task_name) at [10 am](time)
+      - add a reminder for [take vitamin D](task_name) at [9 am](time)
+      - remind me to [go to the gym](task_name) at [6 pm](time)
+      - please remind me to [send the invoice](task_name) at [1:30 pm](time)
+      - set a reminder for [attend the parent teacher meeting](task_name) tomorrow at [9:30 am](time)
+      - remind me to [switch off the geyser](task_name) in [40 minutes](time)
+      - remind me to [call the doctor](task_name) at [12:15 pm](time)
+      - set a reminder to [join the standup call](task_name) tomorrow at [9:55 am](time)
+      - remind me to [take the cake out of the oven](task_name) in [50 minutes](time)
+      - can you set a reminder for [finish the bug report](task_name) at [4:30 pm](time)
+      - remind me to [leave for the movie](task_name) at [6:10 pm](time)
+      - add a reminder to [check the washing machine](task_name) in [35 minutes](time)
+      - remind me to [message Neha](task_name) at [8:05 pm](time)
+      - please remind me to [review tomorrow's agenda](task_name) tonight at [10 pm](time)
+      - set a reminder for [renew the internet plan](task_name) tomorrow at [1 pm](time)
+      - remind me to [pick up the medicine](task_name) at [5:15 pm](time)
+      - I need a reminder to [start the backup](task_name) at [11:45 pm](time)
+      - remind me to [check the train status](task_name) in [90 minutes](time)
+      - set a reminder to [call the insurance office](task_name) on [Monday at 10 am](time)
 
   - intent: list_reminders
     examples: |
-      - do I have any reminders?
-      - what reminders are set?
+      - what reminders do I have
       - show my reminders
-      - what do I have to do?
-      - what tasks have I asked you to remind me about?
-      - can you tell me my reminders?
-      - list all my reminders
-      - give me a list of reminders
-      - what are my upcoming reminders?
-      - show me all scheduled reminders
-      - remind me what I set
-      - what did I ask you to remind me?
-      - any tasks pending?
-      - are there any reminders set?
-      - tell me the list of reminders
-      - show me pending reminders
-      - what’s on my reminder list?
-      - what should I not forget?
-      - anything I need to do today?
-      - what things am I supposed to remember?
+      - list my reminders
+      - do I have any reminders
+      - tell me my reminders
+      - what have you reminded me about
+      - show me all my scheduled reminders
+      - can you list my active reminders
+      - what tasks are on my reminder list
+      - tell me what reminders are set
+      - what am I supposed to remember
+      - do I have anything scheduled
+      - show me my upcoming reminders
+      - give me a list of my reminders
+      - what reminders are pending
+      - can you show my reminder list
+      - let me see my reminders
+      - what have I asked you to remind me about
+      - list all the reminders you have for me
+      - what are my current reminders
+      - are there any reminders set right now
+      - what tasks do you have saved as reminders
+      - show me everything on my reminder list
+      - remind me what I scheduled
+      - what upcoming tasks should I remember
+      - can you tell me what reminders are active
+      - do you have any reminders stored for me
+      - show the reminders I created
+      - what reminder tasks are left
+      - what do I need to remember today
+      - tell me all upcoming reminders
+      - show pending reminder tasks
+      - can you read out my reminders
+      - what's on my reminders right now
+      - what alerts have I set
+      - list the reminders I added
+      - what have I scheduled as reminders
+      - show me the reminder queue
+      - can you display my reminder entries
+      - do I currently have any active reminders
+      - what things are waiting in my reminder list
+      - tell me every reminder you have saved
+      - what reminders are coming up next
+      - can you pull up my reminder list
+      - show me the tasks I asked you to remember
+      - what reminder items do I have
+      - give me my current reminder schedule
+      - tell me if I have any reminder set
+      - what do you need to remind me about
+      - give me my reminder overview
 
   - intent: update_reminder
     examples: |
-      - I want to update the reminder for [call mom](task_name)
-      - change the time for [gym workout](task_name)
-      - reschedule [team meeting](task_name)
-      - update the [doctor appointment](task_name) to 6 pm
-      - shift [homework](task_name) to tomorrow 5
-      - can you move [laundry](task_name) to 9:30?
-      - modify [medicine](task_name) reminder to 8 am
-      - push [assignment](task_name) to evening
-      - I need to change the timing of [buy groceries](task_name)
-      - delay [yoga class](task_name) to 7:30 am
-      - change reminder time for [coding session](task_name)
-      - adjust the time for [take out trash](task_name)
-      - postpone [call with boss](task_name) to 5:15
-      - shift the reminder for [evening walk](task_name)
-      - move the [zoom call](task_name) to later
-      - update [stock check](task_name) to morning
-      - set [meeting](task_name) for 3 pm instead
-      - modify [check system updates](task_name) timing
-      - reschedule my [reminder to water plants](task_name)
-      - change [dinner](task_name) reminder to 8:45
+      - update the reminder for [call mom](task_name) to [7 pm](time)
+      - change [gym workout](task_name) to [6:30 am](time)
+      - reschedule [team meeting](task_name) for [4 pm](time)
+      - move [doctor appointment](task_name) to [5:15 pm](time)
+      - change the reminder for [take medicine](task_name) to [9 am](time)
+      - push [submit the report](task_name) to [tomorrow at 10 am](time)
+      - update [watering the plants](task_name) to [8 pm](time)
+      - shift [call the bank](task_name) to [2:30 pm](time)
+      - can you move [buy groceries](task_name) to [7:45 pm](time)
+      - reschedule [join the webinar](task_name) for [tomorrow at 6 pm](time)
+      - change [feed the cat](task_name) to [8:15 am](time)
+      - update [check the oven](task_name) to [in 10 minutes](time)
+      - move [send the invoice](task_name) to [1 pm](time)
+      - change the time for [pick up the parcel](task_name) to [3:20 pm](time)
+      - can you reschedule [call dad](task_name) to [tomorrow at 8 pm](time)
+      - update the reminder [go to the gym](task_name) to [6 pm](time)
+      - delay [join the standup call](task_name) to [10:05 am](time)
+      - shift [start cooking dinner](task_name) to [7:30 pm](time)
+      - modify [leave home](task_name) to [7:40 am](time)
+      - change [review the contract](task_name) to [tomorrow at 1 pm](time)
+      - move [call the plumber](task_name) to [4 pm](time)
+      - update [charge the laptop](task_name) to [in 20 minutes](time)
+      - reschedule [check the washing machine](task_name) for [in 45 minutes](time)
+      - set [take a short walk](task_name) for [in 1 hour](time) instead
+      - change the reminder for [message Neha](task_name) to [9 pm](time)
+      - please update [review tomorrow's agenda](task_name) to [10:30 pm](time)
+      - move [pick up Aarav from school](task_name) to [3 pm](time)
+      - reschedule [call the doctor](task_name) for [12:45 pm](time)
+      - change [attend yoga class](task_name) to [tomorrow at 7 am](time)
+      - shift [finish the bug report](task_name) to [5 pm](time)
+      - update [join the interview](task_name) to [9:30 am](time)
+      - modify [take the cake out of the oven](task_name) to [in 55 minutes](time)
+      - move [check the stock market](task_name) to [10 am](time)
+      - change [start the presentation](task_name) to [10:30 am](time)
+      - can you update [leave for the movie](task_name) to [6:45 pm](time)
+      - reschedule [reply to the client email](task_name) for [in 25 minutes](time)
+      - change [call Riya](task_name) to [8:30 pm](time)
+      - move [attend the parent teacher meeting](task_name) to [tomorrow at 10 am](time)
+      - update [switch off the geyser](task_name) to [in 50 minutes](time)
+      - shift [renew the internet plan](task_name) to [tomorrow at 2 pm](time)
+      - modify [pick up the medicine](task_name) to [6 pm](time)
+      - reschedule [start the backup](task_name) for [11:59 pm](time)
+      - change [check the train status](task_name) to [in 2 hours](time)
+      - move [call the insurance office](task_name) to [Monday at 11 am](time)
+      - update [join the team meeting](task_name) to [3 pm](time)
+      - change the reminder for [take vitamin D](task_name) to [8:30 am](time)
+      - reschedule [submit the expense sheet](task_name) for [4:45 pm](time)
+      - move [book the dentist appointment](task_name) to [tomorrow at 11 am](time)
+      - update [leave for the airport](task_name) to [4:45 am](time)
+      - change [call the bank](task_name) reminder to [3 pm](time)
 
   - intent: remove_reminder
     examples: |
-      - I want to remove [wash clothes](task_name)
-      - delete the reminder for [doctor appointment](task_name)
-      - cancel [feed the dog](task_name)
-      - remove [meeting](task_name) reminder
-      - get rid of [call dad](task_name)
-      - clear [gym](task_name) from my reminders
-      - remove the [laundry](task_name) reminder
-      - take off [team sync](task_name)
-      - cancel the task [assignment](task_name)
-      - drop the reminder for [zoom call](task_name)
-      - delete [evening walk](task_name)
-      - no need to remind about [pay bills](task_name)
-      - erase [send the report](task_name)
-      - take off the reminder for [buy vegetables](task_name)
-      - remove [weekly cleaning](task_name)
-      - cancel [call Riya](task_name)
-      - stop reminding me about [homework](task_name)
-      - delete the reminder for [feed the cat](task_name)
-      - don't remind me to [reply to emails](task_name)
-      - remove the task [record expenses](task_name)
+      - remove the reminder for [call mom](task_name)
+      - delete [take medicine](task_name) from my reminders
+      - cancel the reminder for [join the team meeting](task_name)
+      - stop reminding me to [water the plants](task_name)
+      - remove [pay the electricity bill](task_name)
+      - delete the reminder about [submit the assignment](task_name)
+      - clear [leave for the airport](task_name) from my reminder list
+      - cancel [call the bank](task_name)
+      - remove the reminder to [start cooking dinner](task_name)
+      - delete [take the laundry out](task_name)
+      - stop reminding me about [book the dentist appointment](task_name)
+      - remove [send the status update](task_name) reminder
+      - cancel the alert for [check the oven](task_name)
+      - delete [attend yoga class](task_name) from reminders
+      - take off [pick up the parcel](task_name)
+      - remove the reminder for [review the contract](task_name)
+      - cancel [take a short walk](task_name) reminder
+      - delete the reminder about [call Riya](task_name)
+      - stop reminding me to [join the interview](task_name)
+      - remove [buy groceries](task_name) from the list
+      - cancel the reminder for [check the stock market](task_name)
+      - delete [feed the cat](task_name)
+      - remove the reminder to [reply to the client email](task_name)
+      - clear [leave home](task_name) reminder
+      - cancel [call dad](task_name)
+      - delete the reminder for [submit the expense sheet](task_name)
+      - stop reminding me to [charge the laptop](task_name)
+      - remove [join the webinar](task_name)
+      - cancel the reminder for [pick up Aarav from school](task_name)
+      - delete [call the plumber](task_name) reminder
+      - remove the reminder about [check on the soup](task_name)
+      - cancel [start the presentation](task_name)
+      - clear the reminder for [take vitamin D](task_name)
+      - delete [go to the gym](task_name)
+      - stop reminding me about [send the invoice](task_name)
+      - remove the reminder for [attend the parent teacher meeting](task_name)
+      - cancel [switch off the geyser](task_name)
+      - delete the reminder to [call the doctor](task_name)
+      - remove [join the standup call](task_name)
+      - cancel the alert for [take the cake out of the oven](task_name)
+      - delete [finish the bug report](task_name)
+      - remove the reminder for [leave for the movie](task_name)
+      - stop reminding me to [check the washing machine](task_name)
+      - cancel [message Neha](task_name)
+      - delete the reminder about [review tomorrow's agenda](task_name)
+      - remove [renew the internet plan](task_name) from reminders
+      - cancel the reminder for [pick up the medicine](task_name)
+      - delete [start the backup](task_name)
+      - clear [check the train status](task_name)
+      - remove the reminder to [call the insurance office](task_name)
