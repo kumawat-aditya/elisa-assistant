@@ -168,6 +168,13 @@ class ElisaLogHandler(logging.Handler):
         self.controller = controller
 
     def emit(self, record: logging.LogRecord):
+        # Skip noisy third-party DEBUG logs that aren't useful in the UI:
+        #   - websockets: frame-level chatter causes a feedback loop
+        #   - urllib3/connectionpool: health-check HTTP connection noise
+        #   - asyncio: event-loop selector selection noise
+        _NOISY_PREFIXES = ("websockets", "urllib3", "asyncio")
+        if record.name.startswith(_NOISY_PREFIXES):
+            return
         try:
             msg = self.format(record) if self.formatter else record.getMessage()
             self.controller._queue_log(
@@ -245,8 +252,8 @@ class ElisaUIController:
         self._log_handler.setLevel(logging.DEBUG)
         self._log_handler.setFormatter(logging.Formatter("%(message)s"))
         root = logging.getLogger()
-        if root.level == logging.NOTSET or root.level > logging.INFO:
-            root.setLevel(logging.INFO)
+        if root.level == logging.NOTSET or root.level > logging.DEBUG:
+            root.setLevel(logging.DEBUG)
         root.addHandler(self._log_handler)
 
         self._interceptors_installed = True

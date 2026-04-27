@@ -1,4 +1,7 @@
+import logging
 import requests
+
+logger = logging.getLogger(__name__)
 
 RASA_URL = "http://localhost:5005/webhooks/rest/webhook"
 
@@ -46,8 +49,7 @@ def process_command(command, sender="user1"):
         continue_conversation = False
 
         if response_data:
-            print("======================= response data =======================")
-            print(response_data)
+            logger.debug("Rasa raw response: %s", response_data)
 
             for message in response_data:
                 # Case 1: Response has a direct "text" key
@@ -69,15 +71,13 @@ def process_command(command, sender="user1"):
                     if custom_data.get("continue"):  # Check "continue" flag
                         continue_conversation = True
 
-            print("======================= response =======================")
-            for msg in messages:
-                print(msg)
-            print(f"Continue conversation: {continue_conversation}")
+            logger.debug("Parsed messages: %s", messages)
+            logger.debug("Continue conversation: %s", continue_conversation)
 
             return messages, continue_conversation
         else:
             return ["Sorry, I didn't understand that."], False
 
     except requests.exceptions.RequestException as e:
-        print(f"Error sending request to Rasa: {e}")
+        logger.error("Error sending request to Rasa: %s", e)
         return ["I'm having trouble connecting to the server."], False

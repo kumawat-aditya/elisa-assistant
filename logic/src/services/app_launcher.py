@@ -1,10 +1,13 @@
 # utils/app_launcher.py
+import logging
 import subprocess
 import os
 import platform
 import glob
 from difflib import get_close_matches
 import shutil # For finding executables on Windows
+
+logger = logging.getLogger(__name__)
 
 def get_linux_gui_apps():
     """Fetch GUI applications from .desktop entries on Linux."""
@@ -119,7 +122,7 @@ def open_application(app_name_query: str):
                         subprocess.Popen([cmd_name]) 
                         return f"Attempting to open {cmd_name}..."
                     except Exception as e:
-                        print(f"Error running {cmd_name}: {e}")
+                        logger.error("Error running %s: %s", cmd_name, e)
                         continue # Try next command in list
             return f"Could not find or run '{app_name_query}'. Make sure it's installed and in your PATH."
         else:
@@ -163,7 +166,7 @@ def open_application(app_name_query: str):
                     subprocess.Popen(f'start "" "{app_name_query}"', shell=True)
                     return f"Attempting to open '{app_name_query}' on Windows..."
                  except Exception as e:
-                    print(f"Error trying 'start {app_name_query}': {e}")
+                    logger.error("Error trying 'start %s': %s", app_name_query, e)
                     return f"Could not open '{app_name_query}' on Windows. Error: {e}"
 
         if command_to_run:
@@ -172,7 +175,7 @@ def open_application(app_name_query: str):
                 subprocess.Popen(['start', '', command_to_run], shell=True)
                 return f"Attempting to open {command_to_run} on Windows..."
             except Exception as e:
-                print(f"Error running 'start {command_to_run}': {e}")
+                logger.error("Error running 'start %s': %s", command_to_run, e)
                 # Fallback: try finding it in PATH directly (less common for GUI apps without 'start')
                 if shutil.which(command_to_run):
                     try:

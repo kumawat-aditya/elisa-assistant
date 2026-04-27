@@ -1,3 +1,4 @@
+import logging
 import sys
 import os
 import json
@@ -9,6 +10,8 @@ import simpleaudio as sa
 from datetime import datetime
 from pytz import timezone
 from scheduler.scheduler_core import scheduler  # Updated import path
+
+logger = logging.getLogger(__name__)
 
 # Base directory structure
 SRC_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # logic/src/
@@ -49,9 +52,9 @@ def notify(response):
         sa.WaveObject.from_wave_file(RESPONSE_WAV).play().wait_done()
 
     except requests.exceptions.RequestException as e:
-        print(f"Error communicating with TTS server: {e}")
+        logger.error("Error communicating with TTS server: %s", e)
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logger.error("Unexpected error in notify(): %s", e)
 
 def remind(task_name, early=False):
     msg = f"⏰ Reminder: '{task_name}'"
@@ -60,7 +63,7 @@ def remind(task_name, early=False):
         notify("Upcoming in 10 mins: " + task_name)
     else:
         notify("Reminder: " + task_name)
-    print(msg)
+    logger.info(msg)
 
     os_platform = platform.system().lower()
     try:
@@ -68,16 +71,16 @@ def remind(task_name, early=False):
             if shutil.which("notify-send"):
                 subprocess.run(['notify-send', 'Elisa Reminder', msg], timeout=5)
         elif os_platform == "windows":
-            print("Desktop notification for Windows: Consider using a library like 'plyer' or 'win10toast'.")
+            logger.info("Desktop notification for Windows: Consider using a library like 'plyer' or 'win10toast'.")
         elif os_platform == "darwin":
             if shutil.which("terminal-notifier"):
                 subprocess.run(['terminal-notifier', '-title', 'Elisa Reminder', '-message', msg], timeout=5)
             else:
                 subprocess.run(['osascript', '-e', f'display notification "{msg}" with title "Elisa Reminder"'], timeout=5)
         else:
-            print(f"Desktop notifications not configured for OS: {os_platform}")
+            logger.warning("Desktop notifications not configured for OS: %s", os_platform)
     except Exception as e:
-        print(f"Error sending desktop notification: {e}")
+        logger.error("Error sending desktop notification: %s", e)
 
 def load_reminders():
     if not os.path.exists(REMINDER_FILE):
@@ -116,6 +119,6 @@ def remove_reminder(task_name: str):
         job = scheduler.get_job(job_id)
         if job:
             scheduler.remove_job(job_id)
-            print(f"[Scheduler] Removed job: {job_id}")
+            logger.debug("Removed scheduled job: %s", job_id)
             removed = True
     return removed

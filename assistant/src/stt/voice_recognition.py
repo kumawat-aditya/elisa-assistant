@@ -1,3 +1,4 @@
+import logging
 import pyaudio
 import wave
 import webrtcvad
@@ -8,6 +9,8 @@ import os
 import sys
 import time
 import numpy as np
+
+logger = logging.getLogger(__name__)
 
 # Try to import sounddevice for PipeWire/PulseAudio compatible playback
 try:
@@ -25,10 +28,7 @@ except ImportError:
 
 # Add parent directory to path for imports
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from session.websocket import create_ui_logger, ui_controller as _ui_controller
-
-# Create UI logger for this module
-ui_logger = create_ui_logger("VoiceRecognition")
+from session.websocket import ui_controller as _ui_controller
 
 # === CONFIGURABLE SETTINGS ===
 RATE = 16000
@@ -50,10 +50,6 @@ BEEP_PATH = os.path.join(AUDIO_PERM_DIR, 'beep.wav')
 
 # Ensure TEMP_DIR exists
 os.makedirs(AUDIO_TEMP_DIR, exist_ok=True)
-
-# === DEBUG PRINT FUNCTION ===
-def debug(msg):
-    print(f"🔍 DEBUG: {msg}")
 
 # === FIND WORKING INPUT DEVICE ===
 def find_working_input_device(p):
@@ -158,13 +154,13 @@ def play_wav_file(filepath):
 
 # === PLAY BEEP SOUND ===
 def play_beep(path=BEEP_PATH):
-    debug("Playing beep sound")
+    logger.debug("Playing beep sound")
     if not play_wav_file(path):
-        print(f"⚠️ Beep sound failed: No audio playback method available")
+        logger.warning("Beep sound failed: No audio playback method available")
 
 # === RECORD AUDIO USING VAD ===
 def vad_record(audio_temp_path):
-    debug("Setting up VAD and PyAudio")
+    logger.debug("Setting up VAD and PyAudio")
     vad = webrtcvad.Vad(VAD_AGGRESSIVENESS)
     p = pyaudio.PyAudio()
 
@@ -173,9 +169,9 @@ def vad_record(audio_temp_path):
     
     if device_index is not None:
         device_info = p.get_device_info_by_index(device_index)
-        debug(f"Using audio device [{device_index}]: {device_info['name']}")
+        logger.debug("Using audio device [%d]: %s", device_index, device_info['name'])
     else:
-        debug("Using default audio device")
+        logger.debug("Using default audio device")
 
     stream = p.open(format=FORMAT,
                     channels=CHANNELS,
@@ -187,7 +183,7 @@ def vad_record(audio_temp_path):
     frames = []
     ring_buffer = collections.deque(maxlen=MAX_SILENCE_FRAMES)
     triggered = False
-    debug("Listening started. Waiting for speech...")
+    logger.debug("Listening started. Waiting for speech...")
 
     while True:
         data = stream.read(CHUNK, exception_on_overflow=False)
@@ -197,7 +193,7 @@ def vad_record(audio_temp_path):
             ring_buffer.append((data, is_speech))
             num_voiced = len([f for f, speech in ring_buffer if speech])
             if num_voiced > 0.8 * ring_buffer.maxlen:
-                debug("Speech detected! Starting to record...")
+                logger.debug("Speech detected! Starting to record...")
                 triggered = True
                 frames.extend([f for f, s in ring_buffer])
                 ring_buffer.clear()
@@ -206,13 +202,13 @@ def vad_record(audio_temp_path):
             ring_buffer.append((data, is_speech))
             num_unvoiced = len([f for f, speech in ring_buffer if not speech])
             if num_unvoiced > 0.9 * ring_buffer.maxlen:
-                debug("Silence detected. Ending recording...")
+                logger.debug("Silence detected. Ending recording...")
                 break
 
     stream.stop_stream()
     stream.close()
     p.terminate()
-    debug(f"Saving audio to {audio_temp_path}")
+    logger.debug("Saving audio to %s", audio_temp_path)
 
     wf = wave.open(audio_temp_path, 'wb')
     wf.setnchannels(CHANNELS)
@@ -220,11 +216,11 @@ def vad_record(audio_temp_path):
     wf.setframerate(RATE)
     wf.writeframes(b''.join(frames))
     wf.close()
-    debug("Audio saved successfully")
+    logger.debug("Audio saved successfully")
 
 # === RECOGNIZE USING WHISPER.CLI ===
 def recognize_with_whisper_cpp(audio_path, model_path=MODEL_PATH):
-    debug(f"Running whisper-cli with model {model_path} on file {audio_path}")
+    logger.debug("Running whisper-cli with model %s on file %s", model_path, audio_path)
     
     output_txt_path = audio_path + ".txt"
 
@@ -239,51 +235,51 @@ def recognize_with_whisper_cpp(audio_path, model_path=MODEL_PATH):
 
     try:
         result = subprocess.run(command, capture_output=True, text=True, check=True)
-        debug("Transcription completed by whisper-cli")
+        logger.debug("Transcription completed by whisper-cli")
 
         if os.path.exists(output_txt_path):
             with open(output_txt_path, "r") as f:
                 transcription = f.read().strip()
             os.remove(output_txt_path)  # Clean up
-            debug("Transcription read and cleaned up")
+            logger.debug("Transcription read and cleaned up")
             return transcription
         else:
-            debug("❌ Transcription file not found")
+            logger.warning("Transcription file not found after whisper-cli run")
             return None
     except subprocess.CalledProcessError as e:
-        print(f"❌ whisper-cli failed: {e}")
-        print(e.stdout)
-        print(e.stderr)
+        logger.error("whisper-cli failed: %s", e)
+        logger.debug("whisper-cli stdout: %s", e.stdout)
+        logger.debug("whisper-cli stderr: %s", e.stderr)
         return None
 
 # === MAIN FUNCTION TO RECORD AND RECOGNIZE ===
 def recognize_speech():
     audio_temp_filename = f"temp_{uuid.uuid4().hex}.wav"
     audio_temp_path = os.path.join(AUDIO_TEMP_DIR, audio_temp_filename)
-    debug("=== Speech recognition started ===")
+    logger.debug("Speech recognition started")
 
     try:
         play_beep()
-        ui_logger.set_state("listening")
-        ui_logger.log_info("Starting voice recording...")
+        _ui_controller.set_state("listening")
+        logger.info("Starting voice recording...")
         vad_record(audio_temp_path)
-        ui_logger.log_success("Audio recorded successfully.")
+        logger.info("Audio recorded successfully.")
         # Advance pipeline to stt now that Whisper is about to run
         _ui_controller.set_pipeline_stage("stt", {})
-        ui_logger.set_state("processing")
+        _ui_controller.set_state("processing")
         result = recognize_with_whisper_cpp(audio_temp_path)
         if result:
-            print(f"✅ Recognized: {result}")
+            logger.info("Recognized: %s", result)
         else:
-            print("❌ No recognizable speech.")
+            logger.warning("No recognizable speech detected.")
         return result
     except Exception as e:
-        print(f"⚠️ Error during recognition: {e}")
+        logger.error("Error during recognition: %s", e)
         return None
     finally:
         if os.path.exists(audio_temp_path):
             os.remove(audio_temp_path)
-            debug("Temporary audio file removed")
+            logger.debug("Temporary audio file removed")
 
 # # === TEST MAIN FUNCTION ===
 # def main():
