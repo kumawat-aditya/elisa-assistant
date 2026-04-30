@@ -18,6 +18,7 @@ SRC_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # logic/s
 LOGIC_DIR = os.path.dirname(SRC_DIR)  # logic/
 PROJECT_ROOT = os.path.dirname(LOGIC_DIR)  # elisa-assistant/
 
+REMINDERS_DIR = os.path.join(SRC_DIR, "data", "reminders")
 REMINDER_FILE = os.path.join(SRC_DIR, "data", "reminders", "reminders.json")
 RESPONSE_WAV = os.path.join(PROJECT_ROOT, "shared", "audio", "temporary", "response.wav")
 NOTIFICATION_WAV = os.path.join(PROJECT_ROOT, "shared", "audio", "permanent", "notification.wav")
@@ -89,6 +90,7 @@ def load_reminders():
         return json.load(file)
 
 def save_reminders(reminders):
+    os.makedirs(REMINDERS_DIR, exist_ok=True)
     with open(REMINDER_FILE, "w") as file:
         json.dump(reminders, file, indent=4)
 

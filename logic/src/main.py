@@ -49,3 +49,8 @@ def parse_text(request: Request):
 @app.get("/")
 def read_root():
     return {"status": "Logic Service is running."}
+
+
+@app.get("/health")
+def health_check():
+    return {"status": "ok", "service": "logic"}

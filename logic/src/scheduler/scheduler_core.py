@@ -6,7 +6,9 @@ from apscheduler.executors.pool import ThreadPoolExecutor
 
 # Get absolute path to reminder_jobs.sqlite inside data/
 SRC_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # logic/src/
-DB_PATH = os.path.join(SRC_DIR, "data", "reminders", "reminder_jobs.sqlite").replace("\\", "/")
+REMINDERS_DIR = os.path.join(SRC_DIR, "data", "reminders")
+os.makedirs(REMINDERS_DIR, exist_ok=True)
+DB_PATH = os.path.join(REMINDERS_DIR, "reminder_jobs.sqlite").replace("\\", "/")
 
 scheduler = BackgroundScheduler(
     jobstores={"default": SQLAlchemyJobStore(url=f"sqlite:///{DB_PATH}")},
