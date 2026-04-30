@@ -141,7 +141,15 @@ class ActionSetReminder(Action):
             domain: Dict[Text, Any]) -> List[Dict[Text, Any]]:
 
         task = tracker.get_slot("task_name") or next(tracker.get_latest_entity_values("task_name"), None)
-        time_value = tracker.get_slot("time") or next(tracker.get_latest_entity_values("time"), None)
+
+        # Prefer DucklingEntityExtractor's ISO-resolved time over raw DIETClassifier value
+        time_value = None
+        for entity in tracker.latest_message.get("entities", []):
+            if entity.get("entity") == "time" and entity.get("extractor") == "DucklingEntityExtractor":
+                time_value = entity.get("value")
+                break
+        if not time_value:
+            time_value = tracker.get_slot("time") or next(tracker.get_latest_entity_values("time"), None)
 
         if not task or not time_value:
             task = time_value = ""

@@ -572,6 +572,20 @@ nlu:
       - I need a reminder to [start the backup](task_name) at [11:45 pm](time)
       - remind me to [check the train status](task_name) in [90 minutes](time)
       - set a reminder to [call the insurance office](task_name) on [Monday at 10 am](time)
+      - remind me to [end this video](task_name) in [5 minutes](time)
+      - remind me to [end the video](task_name) in [5 minutes](time)
+      - remind me to [stop this video](task_name) in [5 minutes](time)
+      - remind me to [wrap up this video](task_name) in [10 minutes](time)
+      - remind me to [end this session](task_name) in [5 minutes](time)
+      - remind me to [stop watching](task_name) in [5 minutes](time)
+      - remind me to [close the video](task_name) in [5 minutes](time)
+      - remind me to [end the stream](task_name) in [5 minutes](time)
+      - remind me to [end this call](task_name) in [5 minutes](time)
+      - remind me to [finish this episode](task_name) in [5 minutes](time)
+      - remind me to [end this recording](task_name) in [5 minutes](time)
+      - remind me to [pause the video](task_name) in [15 minutes](time)
+      - remind me to [stop the podcast](task_name) in [20 minutes](time)
+      - remind me to [end this game](task_name) in [5 minutes](time)
 
   - intent: list_reminders
     examples: |
