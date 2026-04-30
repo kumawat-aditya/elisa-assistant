@@ -281,7 +281,7 @@ ELISA monitors system state in the background (calendar, reminders, weather, new
          │ (Docker)
          ▼
 ┌────────────────────┐    ┌────────────────┐
-│  Coqui TTS :5002   │    │ Duckling :8000 │
+│  Coqui TTS :5002   │    │ Duckling :8022 │
 └────────────────────┘    └────────────────┘
 ```
 
