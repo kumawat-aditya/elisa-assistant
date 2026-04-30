@@ -5,6 +5,9 @@ app_env
 logic_env
 nlu_env
 
+# database folder
+logic/src/data/reminders/
+
 # Whisper root directory
 stt/whisper.cpp
 
