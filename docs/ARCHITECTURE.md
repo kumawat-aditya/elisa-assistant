@@ -1,6 +1,6 @@
 # ELISA — System Architecture
 
-> Deep-dive into the multi-service layered architecture, component responsibilities, internal design decisions, and failure characteristics of the ELISA voice assistant.
+> Runtime topology, component responsibilities, session data architecture, and failure isolation for the ELISA voice assistant.
 
 ---
 
@@ -8,14 +8,16 @@
 
 - [Design Philosophy](#design-philosophy)
 - [System Topology](#system-topology)
-- [End-to-End Request Flow](#end-to-end-request-flow)
+- [Runtime Execution Model](#runtime-execution-model)
+- [Session and UI Data Architecture](#session-and-ui-data-architecture)
 - [Component Analysis](#component-analysis)
   - [Assistant Layer](#1-assistant-layer)
-  - [NLU Layer](#2-nlu-layer-rasa)
-  - [Logic Layer](#3-logic-layer-fastapi)
-  - [Infrastructure Services](#4-infrastructure-services)
+  - [Browser UI Surface](#2-browser-ui-surface)
+  - [NLU Layer (Rasa)](#3-nlu-layer-rasa)
+  - [Logic Layer (FastAPI)](#4-logic-layer-fastapi)
+  - [Infrastructure Services](#5-infrastructure-services)
 - [NLU Pipeline Design](#nlu-pipeline-design)
-- [Scheduler Architecture](#scheduler-architecture)
+- [Reminder and Scheduler Architecture](#reminder-and-scheduler-architecture)
 - [Failure Modes and Isolation](#failure-modes-and-isolation)
 - [Port Allocation Map](#port-allocation-map)
 
@@ -23,133 +25,225 @@
 
 ## Design Philosophy
 
-ELISA is designed around three architectural constraints:
+ELISA is built around four architectural rules.
 
-1. **Service Isolation** — Each layer (Assistant, NLU, Logic) runs in its own process with its own Python virtual environment. There are no shared imports between layers. All inter-layer communication is over HTTP REST, making each layer independently deployable and replaceable.
-
-2. **Unidirectional Data Flow** — Voice input flows strictly downward: Assistant → NLU → Logic. Responses propagate back up the same chain. There are no lateral calls between NLU and Assistant, and the Logic layer never initiates requests to either upstream service.
-
-3. **Local-First Execution** — Every component in the critical voice pipeline (wake word detection, VAD, STT, intent classification, entity extraction, TTS) runs locally. External network calls are only made for opt-in features (weather API, IP-based geolocation) and never gate core functionality.
+1. **Separate execution from presentation** — The assistant owns microphone, speaker, and pipeline control. The browser UI is a read-only surface driven from assistant-published state, not a second runtime.
+2. **Prefer explicit network contracts** — Assistant, NLU, and Logic do not share Python imports. They communicate through HTTP and WebSocket boundaries that can be reasoned about, logged, and replaced independently.
+3. **Keep the voice path local-first** — Wake word detection, VAD, STT, NLU, entity parsing, and TTS all run locally. Remote APIs remain optional feature integrations.
+4. **Model sessions as replayable state** — The UI does not depend on having been present from process start. The assistant keeps bounded buffers for logs, conversation turns, and metrics so new browser clients receive an immediate snapshot before live streaming resumes.
 
 ---
 
 ## System Topology
 
-The following diagram maps the complete system topology, including all services, their ports, and communication protocols:
-
 ```mermaid
 graph TB
-    subgraph User["User Interface"]
-        MIC["🎤 Microphone"]
-        SPK["🔊 Speaker"]
-        BROWSER["🌐 Web UI<br/>:35109"]
+    subgraph User["User Environment"]
+        MIC["Microphone"]
+        SPK["Speaker"]
+        BROWSER["Browser UI<br/>HTTP :35109"]
     end
 
     subgraph Assistant["Assistant Layer (app_env)"]
-        WW["Wake Word Detection<br/><i>OpenWakeWord</i>"]
-        VAD["VAD Recording<br/><i>WebRTC VAD + PyAudio</i>"]
-        STT["Speech-to-Text<br/><i>Whisper.cpp CLI</i>"]
-        NLU_CLIENT["Rasa HTTP Client<br/><i>nlu_client/</i>"]
-        TTS_CLIENT["TTS Client<br/><i>tts/</i>"]
-        WS["WebSocket Server<br/><i>:8765</i>"]
+        MAIN["main.py<br/>runtime orchestrator"]
+        WAKE["OpenWakeWord<br/>wake_word/"]
+        VAD["WebRTC VAD<br/>stt/"]
+        STT["Whisper.cpp CLI"]
+        NLUC["Rasa client<br/>nlu_client/"]
+        TTSC["TTS client<br/>tts/"]
+
+        subgraph SessionBus["Session Bus"]
+            WS["WebSocket server<br/>:8765"]
+            INT["stdout + logging interceptors"]
+            HEALTH["service health monitor"]
+            BUFFERS["log / conversation / metric buffers"]
+        end
     end
 
     subgraph NLU["NLU Layer (nlu_env)"]
-        RASA["Rasa Server<br/><i>:5005</i>"]
-        ACTIONS["Rasa Action Server<br/><i>:5055</i>"]
-        PIPELINE["NLU Pipeline<br/><i>spaCy + DIET + Duckling</i>"]
+        RASA["Rasa server<br/>:5005"]
+        ACTIONS["Rasa actions<br/>:5055"]
+        PIPELINE["spaCy + DIET + Duckling"]
     end
 
     subgraph Logic["Logic Layer (logic_env)"]
-        FASTAPI["FastAPI Server<br/><i>:8021</i>"]
-        ROUTER["Action Router<br/><i>routes/logic.py</i>"]
-        SERVICES["Service Modules<br/><i>App, Weather, Reminders, etc.</i>"]
-        SCHED["APScheduler<br/><i>SQLite Job Store</i>"]
+        FASTAPI["FastAPI<br/>:8021"]
+        ROUTER["routes/logic.py"]
+        SERVICES["weather, reminders, apps,<br/>search, definitions, typing"]
+        SCHED["APScheduler"]
     end
 
-    subgraph Docker["Docker Services (docker-compose)"]
-        COQUI["Coqui TTS<br/><i>:5002</i>"]
-        DUCKLING["Duckling<br/><i>:8000</i>"]
+    subgraph Infra["Infrastructure"]
+        COQUI["Coqui TTS<br/>:5002"]
+        DUCK["Duckling<br/>:8022"]
+        STATIC["python http.server<br/>UI assets :35109"]
     end
 
-    MIC --> WW
-    WW -->|"wake word detected"| VAD
-    VAD -->|"audio frames"| STT
-    STT -->|"transcribed text"| NLU_CLIENT
-    NLU_CLIENT -->|"HTTP POST :5005"| RASA
+    MIC --> WAKE
+    WAKE --> VAD
+    VAD --> STT
+    STT --> NLUC
+    NLUC -->|HTTP| RASA
     RASA --> PIPELINE
-    PIPELINE -->|"entity extraction"| DUCKLING
-    RASA -->|"custom action call :5055"| ACTIONS
-    ACTIONS -->|"HTTP POST :8021"| FASTAPI
-    FASTAPI --> ROUTER
-    ROUTER --> SERVICES
-    SERVICES --> SCHED
-    FASTAPI -->|"JSON response"| ACTIONS
-    ACTIONS -->|"response"| RASA
-    RASA -->|"response"| NLU_CLIENT
-    NLU_CLIENT --> TTS_CLIENT
-    TTS_CLIENT -->|"HTTP POST :5002"| COQUI
-    COQUI -->|"WAV audio"| TTS_CLIENT
-    TTS_CLIENT --> SPK
-    WS -->|"WebSocket :8765"| BROWSER
+    PIPELINE -->|HTTP| DUCK
+    RASA -->|HTTP| ACTIONS
+    ACTIONS -->|HTTP| FASTAPI
+    FASTAPI --> ROUTER --> SERVICES --> SCHED
+    NLUC --> TTSC -->|HTTP| COQUI --> SPK
+
+    MAIN --> WS
+    INT --> BUFFERS --> WS
+    HEALTH --> WS
+    STATIC --> BROWSER
+    WS -->|WebSocket| BROWSER
 ```
+
+Two paths define the runtime:
+
+- **Command path**: microphone input moves down through the assistant, NLU, and logic services, then returns as TTS output.
+- **Session path**: assistant-side runtime events are buffered and published to the browser as snapshots plus incremental events.
+
+This separation keeps observability rich without making the UI part of the decision-making path.
 
 ---
 
-## End-to-End Request Flow
+## Runtime Execution Model
 
-This sequence diagram traces a complete voice interaction from microphone input to audio output:
+The assistant loop is the controlling runtime abstraction.
 
 ```mermaid
 sequenceDiagram
     participant User
-    participant WakeWord as Wake Word<br/>(OpenWakeWord)
-    participant VAD as VAD Recorder<br/>(WebRTC)
-    participant STT as Whisper.cpp
-    participant Rasa as Rasa Server<br/>(:5005)
-    participant Actions as Action Server<br/>(:5055)
-    participant Duckling as Duckling<br/>(:8000)
-    participant Logic as Logic API<br/>(:8021)
-    participant TTS as Coqui TTS<br/>(:5002)
+    participant Assistant as Assistant runtime
+    participant Browser as Browser UI
+    participant Rasa as Rasa :5005
+    participant Actions as Actions :5055
+    participant Logic as Logic :8021
+    participant TTS as Coqui :5002
 
-    User->>WakeWord: Speaks "Alexa"
-    Note over WakeWord: Score > 0.8 threshold<br/>3s cooldown enforced
-    WakeWord->>WakeWord: Release audio device
-    WakeWord->>VAD: Trigger callback
+    User->>Assistant: say wake word
+    Assistant->>Browser: pipeline_stage {stage: wake_word, data: {score}}
 
-    VAD->>VAD: Open PyAudio stream
-    Note over VAD: Aggressiveness=2<br/>Ring buffer with 80% voice threshold
-    User->>VAD: Speaks command
-    VAD->>VAD: Detect speech boundaries
-    VAD->>STT: Save WAV file
+    User->>Assistant: speak command
+    Assistant->>Browser: state_change {state: listening}
+    Assistant->>Browser: pipeline_stage {stage: vad}
+    Assistant->>Browser: pipeline_stage {stage: stt}
+    Assistant->>Browser: conversation_turn {role: user, text}
 
-    STT->>STT: whisper-cli -m ggml-medium.en
-    STT-->>Rasa: Transcribed text via HTTP POST
+    Assistant->>Rasa: POST /webhooks/rest/webhook
+    Rasa->>Actions: POST /webhook
+    Actions->>Logic: POST /process
+    Logic-->>Actions: {text, continue}
+    Actions-->>Rasa: json_message
+    Rasa-->>Assistant: custom/text response
 
-    Rasa->>Rasa: Tokenize (spaCy)
-    Rasa->>Rasa: Featurize (spaCy + CountVectors + char n-grams)
-    Rasa->>Rasa: Classify intent (DIET, 500 epochs)
-    Rasa->>Duckling: Extract time/duration entities
-    Duckling-->>Rasa: Structured time values (ISO 8601)
-    Rasa->>Rasa: Extract named entities (spaCy NER)
+    Assistant->>Browser: metric {name: nlu_latency_ms}
+    Assistant->>Browser: pipeline_stage {stage: tts}
+    Assistant->>Browser: conversation_turn {role: assistant, text}
 
-    alt Intent maps to custom action (rules.yml)
-        Rasa->>Actions: POST /webhook (action name + tracker)
-        Actions->>Logic: POST /process {action, data}
-        Logic->>Logic: Route to service module
-        Logic-->>Actions: {text, continue}
-        Actions-->>Rasa: dispatcher.utter_message()
-    else Intent maps to utterance template
-        Rasa->>Rasa: Select random template from domain.yml
+    Assistant->>TTS: POST /api/tts
+    TTS-->>Assistant: WAV bytes
+    Assistant->>User: play synthesized audio
+    Assistant->>Browser: metric {name: tts_latency_ms}
+    Assistant->>Browser: pipeline_stage {stage: idle}
+```
+
+Important runtime properties:
+
+- Wake word detection releases the audio device before VAD recording begins, preventing input-device contention.
+- STT, NLU, and TTS latencies are recorded as metrics and streamed to the UI.
+- The browser sees the same session lifecycle the runtime uses internally rather than a separately computed dashboard model.
+- The conversation loop is controlled by the `continue` flag returned from logic-backed or template responses, allowing follow-up turns without requiring a new wake word.
+
+---
+
+## Session and UI Data Architecture
+
+The assistant session layer is a state relay, not just a socket server.
+
+```mermaid
+graph LR
+    subgraph Assistant["Assistant Process"]
+        PRINT["print() calls"]
+        LOGS["logging records"]
+        PIPE["pipeline stages"]
+        TURNS["conversation turns"]
+        METRICS["latency metrics"]
+        HEALTH["service probes"]
+
+        INT["interceptors"]
+        QUEUE["thread-safe queue"]
+        SNAP["snapshot builder"]
+        RINGS["ring buffers"]
     end
 
-    Rasa-->>STT: JSON response array
-    Note over STT: Extract text from response<br/>Handle "custom" payload format
+    subgraph Browser["Browser App"]
+        WSCLIENT["websocket.js"]
+        STORE["store.js"]
+        AV["avatar panel"]
+        PL["pipeline panel"]
+        CV["conversation panel"]
+        LG["logs panel"]
+        VT["vitals panel"]
+    end
 
-    STT->>TTS: POST /api/tts {text}
-    TTS-->>STT: WAV audio bytes
-    STT->>User: Play audio (paplay → pw-play → sounddevice → aplay → simpleaudio)
+    PRINT --> INT
+    LOGS --> INT
+    PIPE --> QUEUE
+    TURNS --> RINGS
+    METRICS --> RINGS
+    HEALTH --> QUEUE
+    INT --> RINGS
+    RINGS --> SNAP
+    QUEUE --> SNAP
+    SNAP --> WSCLIENT
+    WSCLIENT --> STORE
+    STORE --> AV
+    STORE --> PL
+    STORE --> CV
+    STORE --> LG
+    STORE --> VT
 ```
+
+### Assistant-side model
+
+`assistant/src/session/websocket.py` maintains the authoritative read model for the UI:
+
+- **Log buffer**: last 500 entries
+- **Conversation buffer**: last 50 turns
+- **Metric buffer**: last 200 metrics
+- **Service status map**: `rasa`, `logic`, `tts`, `duckling`
+- **Current pipeline state**: active stage plus stage-specific payload
+
+The session layer installs two non-invasive interceptors:
+
+- `PrintInterceptor` mirrors `print()` output into structured log events without breaking terminal output.
+- `ElisaLogHandler` mirrors Python logging records into the same stream while filtering noisy third-party chatter.
+
+`assistant/src/session/health.py` polls backend endpoints every 10 seconds and emits `service_status` updates so the UI can display real availability instead of inferred status.
+
+### Browser-side model
+
+`ui/public/js/store.js` is the single client-side state container. It receives a `snapshot` on connect, then applies incremental updates from `ui/public/js/websocket.js`.
+
+The store tracks:
+
+- WebSocket connection state and schema version
+- Current pipeline stage and recent pipeline history
+- Service health, uptime, and connection status
+- Log stream plus file-frequency map for filtering
+- Conversation history and derived counters
+- Metric histories for sparkline rendering
+
+Every panel is downstream of that store:
+
+- **Avatar** reflects the current stage visually.
+- **Pipeline** shows stage progression and per-stage metadata.
+- **Conversation** renders user and assistant turns, including metadata pills.
+- **Logs** provides search, level filters, file filters, export, and alternate views.
+- **Vitals** renders service health and latency sparklines.
+
+This means a schema change must be coordinated across the assistant session bus and the browser store, not just the UI markup.
 
 ---
 
@@ -157,305 +251,165 @@ sequenceDiagram
 
 ### 1. Assistant Layer
 
-**Directory:** `assistant/src/`
-**Virtual Environment:** `app_env/`
-**Entry Point:** `main.py`
+**Directory:** `assistant/src/`  
+**Virtual environment:** `app_env/`  
+**Entry point:** `main.py`
 
-The Assistant layer is the **runtime orchestrator**. It owns the physical I/O (microphone, speaker) and sequences the voice pipeline. It contains no business logic and no language understanding — it is purely a coordination layer.
+The assistant layer owns physical I/O, conversation control, and runtime observability.
 
-#### Internal Module Breakdown
+| Module            | File                               | Responsibility                                                                                                                                                  |
+| ----------------- | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Wake word         | `wake_word/wake_word_detection.py` | Continuously scores the wake word, enforces cooldown, releases the audio device before invoking the callback, and publishes wake-word scores to the session bus |
+| Voice recognition | `stt/voice_recognition.py`         | Records with WebRTC VAD, advances runtime state from `listening` to `processing`, runs Whisper.cpp, and returns transcripts                                     |
+| NLU client        | `nlu_client/rasa_integration.py`   | Posts transcripts to Rasa, parses both text and custom response shapes, and reads the `continue` conversation flag                                              |
+| TTS client        | `tts/text_to_speech.py`            | Calls Coqui TTS, writes `shared/audio/temporary/response.wav`, and plays audio with cascading playback backends                                                 |
+| Session bus       | `session/websocket.py`             | Buffers logs, turns, metrics, and service status; builds snapshots; handles keepalive; broadcasts WebSocket events                                              |
+| Health monitor    | `session/health.py`                | Polls Rasa, Logic, TTS, and Duckling endpoints and emits `service_status` events                                                                                |
 
-| Module                | File                               | Responsibility                                                                                                                                                                                                                                                                                                                                                                  |
-| --------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Wake Word**         | `wake_word/wake_word_detection.py` | Continuously monitors the microphone for the activation hotword using OpenWakeWord. Detects the "alexa" wake word with a confidence threshold of 0.8. Manages audio device lifecycle — fully closes PyAudio before triggering the callback to prevent device contention with the VAD recorder. Implements a 3-second cooldown to prevent re-triggering from residual TTS audio. |
-| **Voice Recognition** | `stt/voice_recognition.py`         | Implements VAD-based recording using WebRTC VAD (aggressiveness level 2). Uses a ring buffer to detect speech onset (80% voiced frames) and offset (90% unvoiced frames). Saves captured audio as WAV, invokes `whisper-cli` as a subprocess, and parses the text output. Provides multi-backend audio playback (paplay → pw-play → sounddevice → aplay → simpleaudio).         |
-| **TTS Client**        | `tts/text_to_speech.py`            | Sends text to the Coqui TTS Docker container via `POST /api/tts`. Receives WAV bytes, writes to `shared/audio/temporary/response.wav`, and plays back using the same multi-backend strategy.                                                                                                                                                                                    |
-| **NLU Client**        | `nlu_client/rasa_integration.py`   | HTTP client for Rasa's REST webhook (`POST :5005/webhooks/rest/webhook`). Sends `{sender, message}` payloads. Parses responses handling both direct `text` fields and `custom` payloads (used by Logic-backed actions). Extracts the `continue` flag to determine if the conversation loop should persist.                                                                      |
-| **Session/WebSocket** | `session/websocket.py`             | Singleton `ElisaUIController` that runs a WebSocket server on `:8765`. Broadcasts state changes (`boot`, `listening`, `processing`, `speaking`, `idle`) and log entries to connected web UI clients. Uses a thread-safe message queue bridging synchronous assistant code to the async WebSocket event loop.                                                                    |
+The assistant's `main.py` is intentionally small: it sequences the workflow and delegates each specialized concern to dedicated modules.
 
-#### Main Loop Architecture
+### 2. Browser UI Surface
 
-```mermaid
-stateDiagram-v2
-    [*] --> Boot: main() called
-    Boot --> WakeWordListening: Play boot sound + Rasa greeting
+**Directory:** `ui/public/`
 
-    WakeWordListening --> SpeechRecording: Wake word detected (score > 0.8)
-    SpeechRecording --> STTTranscription: Silence detected (VAD)
-    SpeechRecording --> SpeechRecording: Retry (up to 3 attempts)
-    SpeechRecording --> WakeWordListening: 3 failed attempts
+The browser UI is a modular, static web application. It does not own assistant logic and it does not call Rasa or Logic directly. Its job is to render the session read model published by the assistant.
 
-    STTTranscription --> NLUProcessing: Transcribed text available
-    NLUProcessing --> TTSSpeaking: Rasa response received
-    TTSSpeaking --> WakeWordListening: continue = false
-    TTSSpeaking --> SpeechRecording: continue = true
-```
+| Module       | File              | Responsibility                                                                                 |
+| ------------ | ----------------- | ---------------------------------------------------------------------------------------------- |
+| Bootstrap    | `js/app.js`       | Starts the WebSocket client, wires global banners and pills, and initializes the panel modules |
+| Transport    | `js/websocket.js` | Maintains the reconnecting WebSocket client and routes messages into the store                 |
+| Shared state | `js/store.js`     | Normalizes snapshots and incremental messages into one browser-side state tree                 |
+| Panels       | `js/panels/*.js`  | Render independent views for avatar, pipeline, conversation, logs, and vitals                  |
+| Presentation | `css/`            | Separates reset, design system, layout, animation, and per-panel styling                       |
 
-The assistant grants three attempts for speech recognition per wake word activation. If all three fail, it speaks an error message and returns to wake word listening. Conversations that set `continue: true` (e.g., after a definition lookup that offers "Want to know more?") loop back to speech recording without requiring a new wake word trigger.
+This panel-based layout keeps the UI extensible. A new visual surface should subscribe to the existing store rather than opening a new connection or duplicating parsing logic.
 
-#### Audio Device Management
+### 3. NLU Layer (Rasa)
 
-A critical design decision: the wake word detector **fully releases the PyAudio instance** before invoking the speech recognition callback. This prevents device contention on single-microphone systems:
-
-```
-Wake Word Listener: stream.close() → p.terminate() → sleep(0.3) → callback()
-Voice Recognition:  p = PyAudio() → stream = p.open() → record → stream.close() → p.terminate()
-```
-
-Both modules implement `find_working_input_device()` to probe available audio devices and gracefully fall back to the system default.
-
----
-
-### 2. NLU Layer (Rasa)
-
-**Directory:** `nlu/`
-**Virtual Environment:** `nlu_env/`
+**Directory:** `nlu/`  
+**Virtual environment:** `nlu_env/`  
 **Services:** Rasa Server (`:5005`), Action Server (`:5055`)
 
-The NLU layer owns all language understanding: tokenization, featurization, intent classification, entity extraction, and dialogue management. It is the only layer that understands natural language — both upstream (Assistant) and downstream (Logic) communicate in structured data.
+The NLU layer owns natural language interpretation and dialogue policy.
 
-#### Intent Taxonomy
+- `config.yml` defines the spaCy, DIET, Duckling, and fallback pipeline.
+- `domain.yml` defines intents, slots, entities, and responses.
+- `data/` holds training examples, rules, and stories.
+- `actions/actions.py` maps structured tracker state to logic actions.
+- `actions/logic_integration.py` translates those actions into the Logic API contract.
 
-The system recognizes 20 intents organized by function:
+The assistant treats the NLU layer as a pure text-in, message-out service.
 
-| Category           | Intents                                                                                                                 | Handling                            |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------- | ----------------------------------- |
-| **Conversational** | `greet`, `goodbye`, `affirm`, `deny`, `mood_great`, `mood_unhappy`, `bot_challenge`, `wake_up_elisa`, `repeat_after_me` | Utterance templates in `domain.yml` |
-| **System Control** | `open_app`, `search_firefox`, `create_file`, `type_what_i_say`                                                          | Custom actions → Logic API          |
-| **Information**    | `current_date_time`, `meaning_of`, `weather_update`                                                                     | Custom actions → Logic API          |
-| **Reminder CRUD**  | `set_reminder`, `list_reminders`, `remove_reminder`, `update_reminder`                                                  | Custom actions → Logic API          |
+### 4. Logic Layer (FastAPI)
 
-#### Entity System
-
-Entities are extracted through three complementary mechanisms:
-
-```mermaid
-graph LR
-    subgraph DIET["DIET Classifier"]
-        E1["app_name"]
-        E2["query"]
-        E3["words"]
-        E4["text"]
-        E5["task_name"]
-        E6["time"]
-    end
-
-    subgraph SpaCy["spaCy NER"]
-        E7["PERSON"]
-        E8["GPE (locations)"]
-        E9["DATE"]
-        E10["TIME"]
-    end
-
-    subgraph Duck["Duckling"]
-        E11["time (structured)"]
-        E12["duration"]
-    end
-
-    DIET --> SlotFilling["Slot Filling<br/>(from_entity mapping)"]
-    SpaCy --> SlotFilling
-    Duck --> SlotFilling
-```
-
-**DIET Classifier** handles domain-specific entities annotated in training data (e.g., `Open [Chrome](app_name)`). **spaCy NER** provides general-purpose named entity recognition for persons, locations, dates. **Duckling** provides deterministic, rule-based extraction of temporal expressions — critical for the reminder system where "tomorrow at 5pm" must resolve to a precise ISO 8601 timestamp.
-
-#### Dialogue Management
-
-Two policy mechanisms control conversation flow:
-
-1. **RulePolicy** — Deterministic mappings defined in `rules.yml`. Every intent that triggers a custom action has a rule (e.g., `intent: set_reminder → action: action_set_reminder`). Rules take precedence over story-based predictions.
-
-2. **TEDPolicy + MemoizationPolicy** — Handle multi-turn conversations defined in `stories.yml` (e.g., the greeting → mood → cheer-up flow, and the definition → "want more?" → browser-open flow).
-
-#### Session Configuration
-
-```yaml
-session_config:
-  session_expiration_time: 60 # Session expires after 60 seconds of inactivity
-  carry_over_slots_to_new_session: true # Slot values persist across session resets
-```
-
----
-
-### 3. Logic Layer (FastAPI)
-
-**Directory:** `logic/src/`
-**Virtual Environment:** `logic_env/`
+**Directory:** `logic/src/`  
+**Virtual environment:** `logic_env/`  
 **Service:** FastAPI (`:8021`)
 
-The Logic layer is a pure HTTP API that receives structured commands and returns structured responses. It knows nothing about voice, NLU, or dialogue. This makes it testable in isolation and reusable by any client.
+The logic layer receives structured commands and returns structured response objects.
 
-#### API Surface
+- `routes/logic.py` dispatches action codes such as `OPEN_APP`, `GET_WEATHER`, `SET_REMINDER`, and `UPDATE_REMINDER`.
+- `services/` contains the concrete business behaviors.
+- `scheduler/` persists reminder jobs through APScheduler.
+- `data/` stores reminder data and response templates.
 
-The Logic layer exposes a single endpoint:
+Because it does not depend on microphone, speaker, or Rasa internals, the logic layer can be tested in isolation.
 
-```
-POST /process
-Content-Type: application/json
+### 5. Infrastructure Services
 
-{
-  "action": "<ACTION_CODE>",
-  "data": "<action-specific payload>"
-}
-```
+Managed through `infra/docker-compose.yml` and the startup scripts.
 
-#### Action Router
+| Service          | Port    | Role                                                                     |
+| ---------------- | ------- | ------------------------------------------------------------------------ |
+| Coqui TTS        | `5002`  | Text-to-speech API used by the assistant loop and reminder notifications |
+| Duckling         | `8022`  | Temporal entity parsing for Rasa                                         |
+| Static UI server | `35109` | Serves `ui/public/` through Python `http.server`                         |
 
-`routes/logic.py` implements a dispatcher that maps action codes to handler functions:
-
-| Action Code        | Handler              | Service Module        | Description                                          |
-| ------------------ | -------------------- | --------------------- | ---------------------------------------------------- |
-| `OPEN_APP`         | `open_app()`         | `app_launcher.py`     | Cross-platform app launcher with fuzzy name matching |
-| `SEARCH_BROWSER`   | `search_browser()`   | built-in              | Opens Google search in default browser               |
-| `TYPE_TEXT`        | `type_text()`        | built-in              | Simulates keyboard typing via `pynput`               |
-| `GET_CURRENT_TIME` | `get_current_time()` | built-in              | Returns formatted date/time                          |
-| `GET_MEANING`      | `meaning_of()`       | built-in + Wikipedia  | Fetches one-sentence summary from Wikipedia          |
-| `OPEN_BROWSER`     | `open_browser()`     | built-in              | Opens Wikipedia page for a term                      |
-| `GET_WEATHER`      | `get_weather()`      | `weather_info.py`     | Fetches weather from OpenWeatherMap                  |
-| `SET_REMINDER`     | `set_reminder()`     | `reminder_manager.py` | Creates reminder with dual scheduling                |
-| `LIST_REMINDERS`   | `list_reminders()`   | `reminder_manager.py` | Returns active reminders, prunes expired             |
-| `REMOVE_REMINDER`  | `remove_reminder()`  | `reminder_manager.py` | Fuzzy-matched reminder deletion                      |
-| `UPDATE_REMINDER`  | `update_reminder()`  | `reminder_manager.py` | Fuzzy-matched time update                            |
-
-#### Service Module: App Launcher
-
-`services/app_launcher.py` implements cross-platform application launching:
-
-- **Linux:** Scans `.desktop` files from `/usr/share/applications/`, `~/.local/share/applications/`, and uses `get_close_matches()` (cutoff 0.6) for fuzzy matching against user queries.
-- **Windows:** Scans Start Menu `.lnk` shortcuts from both user and all-users directories.
-- **Fallback:** Attempts to run the query as a direct executable name.
-
-#### Service Module: Response Templates
-
-`services/response_loader.py` loads `data/responses.yml` at import time and provides `get_random_response()` — each action's response category contains multiple templates with `{variable}` placeholders, enabling natural variation in assistant speech. Templates also carry a `continue` flag that controls whether the conversation loop stays open.
-
----
-
-### 4. Infrastructure Services
-
-Managed via `infra/docker-compose.yml` on bridge network `elisa-network`:
-
-#### Coqui TTS (`:5002`)
-
-- **Image:** `ghcr.io/coqui-ai/tts-cpu:v0.22.0`
-- **Model:** `tts_models/en/ljspeech/glow-tts` (neural TTS, ~200ms latency for short utterances)
-- **API:** `POST /api/tts` with form data `text=<utterance>` → returns raw WAV bytes
-- **GPU variant** available (commented in docker-compose) using NVIDIA runtime
-
-#### Duckling (`:8000`)
-
-- **Image:** `rasa/duckling:0.2.0.2-r3`
-- **Purpose:** Deterministic parsing of temporal expressions
-- **Called by:** Rasa's `DucklingEntityExtractor` pipeline component
-- **Configuration:** Locale `en_US`, timezone `Asia/Kolkata`
+The infrastructure layer remains intentionally small. Its purpose is to host the supporting services that the local-first assistant depends on.
 
 ---
 
 ## NLU Pipeline Design
 
-The Rasa NLU pipeline processes input through these stages in order:
-
 ```mermaid
 graph TD
-    INPUT["Raw Text Input"] --> SPACYNLP["SpacyNLP<br/><i>Load en_core_web_md</i>"]
-    SPACYNLP --> TOKENIZER["SpacyTokenizer<br/><i>Linguistic tokenization</i>"]
-    TOKENIZER --> FEAT1["SpacyFeaturizer<br/><i>Word embeddings (300d)</i>"]
-    TOKENIZER --> FEAT2["RegexFeaturizer<br/><i>Pattern-based features</i>"]
-    TOKENIZER --> FEAT3["LexicalSyntacticFeaturizer<br/><i>POS tags, morphology</i>"]
-    TOKENIZER --> FEAT4["CountVectorsFeaturizer<br/><i>Word-level BoW</i>"]
-    TOKENIZER --> FEAT5["CountVectorsFeaturizer<br/><i>char n-grams (2-5)</i>"]
+    INPUT["Raw transcript"] --> SPACY["SpacyNLP"]
+    SPACY --> TOKEN["SpacyTokenizer"]
+    TOKEN --> F1["SpacyFeaturizer"]
+    TOKEN --> F2["RegexFeaturizer"]
+    TOKEN --> F3["LexicalSyntacticFeaturizer"]
+    TOKEN --> F4["CountVectorsFeaturizer (word)"]
+    TOKEN --> F5["CountVectorsFeaturizer (char n-gram)"]
 
-    FEAT1 --> DIET["DIET Classifier<br/><i>500 epochs, lr=0.005</i><br/><i>Joint intent + entity</i>"]
-    FEAT2 --> DIET
-    FEAT3 --> DIET
-    FEAT4 --> DIET
-    FEAT5 --> DIET
+    F1 --> DIET["DIETClassifier"]
+    F2 --> DIET
+    F3 --> DIET
+    F4 --> DIET
+    F5 --> DIET
 
-    TOKENIZER --> SPACY_NER["SpacyEntityExtractor<br/><i>PERSON, ORG, GPE, DATE, TIME, PRODUCT</i>"]
-    DIET --> SYNONYM["EntitySynonymMapper"]
-    SYNONYM --> DUCKLING["DucklingEntityExtractor<br/><i>time, duration → ISO 8601</i>"]
-
-    DUCKLING --> RESPONSE["ResponseSelector<br/><i>100 epochs</i>"]
-    RESPONSE --> FALLBACK["FallbackClassifier<br/><i>threshold=0.3, ambiguity=0.1</i>"]
-    FALLBACK --> OUTPUT["Classified Intent + Entities"]
+    TOKEN --> NER["SpacyEntityExtractor"]
+    DIET --> SYN["EntitySynonymMapper"]
+    SYN --> DUCK["DucklingEntityExtractor -> http://localhost:8022"]
+    DUCK --> RESP["ResponseSelector"]
+    RESP --> FALLBACK["FallbackClassifier"]
 ```
 
-**Key design decisions:**
+Key implementation choices:
 
-- **Dual featurization strategy:** spaCy's 300-dimensional word embeddings capture semantic similarity, while CountVectors (both word-level and character n-gram) capture surface patterns. This combination handles both semantic paraphrases and typos.
-- **DIET over pre-trained transformers:** The DIET classifier (500 epochs, dropout 0.2) provides joint intent/entity classification without requiring GPU hardware — aligned with the local-first philosophy.
-- **Fallback threshold at 0.3:** Intents below 30% confidence or with less than 10% margin over the runner-up trigger Rasa's fallback behavior, preventing confident misclassification.
-- **Duckling positioned late in pipeline:** Temporal entities are extracted after DIET, ensuring that Duckling only processes already-tokenized text and its structured output overwrites any conflicting DIET time extractions.
+- spaCy embeddings and count-vector features are combined so the model handles both semantics and surface-form variation.
+- DIET handles joint intent classification and domain-specific entities without requiring transformer-scale infrastructure.
+- Duckling resolves relative times into deterministic ISO timestamps, which is essential for reminder scheduling.
+- Fallback policies reduce confident misclassification when the transcript is ambiguous.
 
 ---
 
-## Scheduler Architecture
-
-The reminder system uses APScheduler with persistent storage:
+## Reminder and Scheduler Architecture
 
 ```mermaid
 graph LR
-    subgraph Storage
-        JSON["reminders.json<br/><i>Task name → ISO time</i>"]
-        SQLITE["reminder_jobs.sqlite<br/><i>APScheduler job store</i>"]
-    end
-
-    subgraph Scheduler["APScheduler (BackgroundScheduler)"]
-        EARLY["Early Job<br/><i>T - 10 min</i>"]
-        ONTIME["On-Time Job<br/><i>T exactly</i>"]
-    end
-
-    subgraph Notification
-        TTS_NOTIFY["TTS Playback<br/><i>Coqui API</i>"]
-        DESKTOP["Desktop Notification<br/><i>notify-send / osascript</i>"]
-    end
-
-    JSON --> |"load/save"| EARLY
-    JSON --> |"load/save"| ONTIME
-    EARLY --> |"trigger"| TTS_NOTIFY
-    EARLY --> |"trigger"| DESKTOP
-    ONTIME --> |"trigger"| TTS_NOTIFY
-    ONTIME --> |"trigger"| DESKTOP
-    SQLITE --> |"persist jobs"| EARLY
-    SQLITE --> |"persist jobs"| ONTIME
+    JSON["reminders.json"] --> LOAD["load / save reminders"]
+    LOAD --> ROUTER["logic route: SET / LIST / REMOVE / UPDATE"]
+    ROUTER --> APS["APScheduler"]
+    APS --> EARLY["T-10 minute reminder"]
+    APS --> ONTIME["on-time reminder"]
+    EARLY --> TTS["Coqui TTS"]
+    ONTIME --> TTS
 ```
 
-Each reminder creates **two scheduled jobs**: an early warning 10 minutes before, and the actual reminder at the specified time. Both are persisted in SQLite, surviving server restarts. The `remind()` function sends TTS audio via the Coqui API and dispatches a platform-appropriate desktop notification (`notify-send` on Linux, `osascript` on macOS).
+Each reminder creates two jobs: an early warning and the scheduled reminder itself. APScheduler persists jobs, while JSON storage remains the human-readable source of reminder data.
 
-**Fuzzy matching** (via `difflib.get_close_matches`, cutoff 0.5) is used for reminder removal and updates, allowing users to say "remove the call mom reminder" even if the stored task is "call mom at office."
+Reminder notifications are the one place where the logic layer directly uses the TTS API. That is intentional: reminder delivery should still work even when the main assistant interaction loop is idle.
 
 ---
 
 ## Failure Modes and Isolation
 
-Because each layer is an independent process, failures are contained:
+| Failure                               | Impact                             | Behavior                                                                              |
+| ------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------- |
+| Rasa unavailable                      | Assistant cannot classify commands | Assistant reports an upstream error and returns to idle                               |
+| Logic unavailable                     | Logic-backed actions fail          | Conversational templates still work; custom actions return an error response          |
+| Duckling unavailable                  | Temporal entity parsing degrades   | Reminder commands fail when time expressions cannot be resolved                       |
+| TTS unavailable                       | Speech output fails                | Errors are logged and published to the UI; text responses still exist in the pipeline |
+| WebSocket/UI unavailable              | Browser observability disappears   | Voice assistant runtime continues; the UI reconnects when the bus returns             |
+| Microphone or audio-device contention | Input capture fails                | Wake word module and VAD recorder aggressively release and reacquire devices          |
+| Whisper failure                       | Transcript missing                 | Assistant retries speech capture up to three times before giving up                   |
 
-| Failure                      | Impact                       | System Behavior                                                                                   |
-| ---------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------- |
-| **Logic API down**           | Custom actions fail          | Rasa Actions returns error text; conversational intents (greet, goodbye) still work               |
-| **Rasa Server down**         | All NLU fails                | Assistant catches `RequestException`, speaks "trouble connecting to the server"                   |
-| **Duckling down**            | Time entity extraction fails | DIET and spaCy entities still work; reminders without parseable times return an error message     |
-| **TTS Docker down**          | No speech output             | `requests.exceptions.RequestException` caught; assistant continues (text still logged)            |
-| **Microphone unavailable**   | No audio input               | `find_working_input_device()` probes all devices; falls back to default; logs error if none found |
-| **Whisper.cpp fails**        | STT returns None             | Three retry attempts; speaks "couldn't understand you" after exhaustion                           |
-| **APScheduler DB corrupted** | Reminders lost               | Scheduler initializes fresh; JSON file provides backup source of truth                            |
-
-The Assistant layer implements a **3-attempt retry loop** for speech recognition and gracefully degrades at each stage. The wake word listener wraps its entire loop in try/except with automatic recovery, ensuring the assistant remains responsive even after transient audio errors.
+The services are intentionally independent so observability failure does not become assistant failure, and UI absence does not break the voice path.
 
 ---
 
 ## Port Allocation Map
 
-| Port    | Service              | Protocol  | Owner                |
-| ------- | -------------------- | --------- | -------------------- |
-| `5002`  | Coqui TTS            | HTTP REST | Docker               |
-| `5005`  | Rasa NLU Server      | HTTP REST | NLU Layer            |
-| `5055`  | Rasa Action Server   | HTTP REST | NLU Layer            |
-| `8000`  | Duckling             | HTTP REST | Docker               |
-| `8021`  | FastAPI Logic API    | HTTP REST | Logic Layer          |
-| `8765`  | WebSocket Server     | WebSocket | Assistant Layer      |
-| `35109` | Web UI (HTTP Server) | HTTP      | Python `http.server` |
+| Port    | Service             | Protocol  | Owner               |
+| ------- | ------------------- | --------- | ------------------- |
+| `5002`  | Coqui TTS           | HTTP      | Infrastructure      |
+| `5005`  | Rasa Server         | HTTP      | NLU                 |
+| `5055`  | Rasa Action Server  | HTTP      | NLU                 |
+| `8021`  | Logic API           | HTTP      | Logic               |
+| `8022`  | Duckling            | HTTP      | Infrastructure      |
+| `8765`  | Session bus         | WebSocket | Assistant           |
+| `35109` | Web UI asset server | HTTP      | Startup script / UI |
 
 ---
 
-_This document reflects the architecture as implemented. For communication protocols and data contract specifications, see [SYSTEM_COMMUNICATION.md](SYSTEM_COMMUNICATION.md)._
+_For payload shapes, snapshot structure, and protocol-level examples, see [SYSTEM_COMMUNICATION.md](SYSTEM_COMMUNICATION.md)._
