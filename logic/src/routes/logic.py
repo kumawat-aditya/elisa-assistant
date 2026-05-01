@@ -11,14 +11,37 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from services.app_launcher import open_application
 from services.weather_info import fetch_weather, get_user_location
-from services.reminder_manager import load_reminders, save_reminders, schedule_reminder, remove_reminder
+from services.reminder_manager import load_reminders, save_reminders, schedule_reminder, remove_reminder as remove_scheduled_reminder
 from services.response_loader import get_random_response
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 import random
 from typing import Any, Text, Dict, List
 from pynput.keyboard import Controller
 import time
 import difflib
+
+
+DEFAULT_REMINDER_TZ = ZoneInfo("Asia/Kolkata")
+
+
+def _normalize_reminder_time(reminder_time: datetime) -> datetime:
+    if reminder_time.tzinfo is None:
+        return reminder_time.replace(tzinfo=DEFAULT_REMINDER_TZ)
+    return reminder_time
+
+
+def _schedule_reminder_notifications(task: str, reminder_time: datetime) -> None:
+    normalized_time = _normalize_reminder_time(reminder_time)
+    remove_scheduled_reminder(task)
+
+    ten_minutes_before = normalized_time - timedelta(minutes=10)
+    now = datetime.now(normalized_time.tzinfo)
+
+    if ten_minutes_before > now:
+        schedule_reminder(task, ten_minutes_before.isoformat(), early=True)
+
+    schedule_reminder(task, normalized_time.isoformat(), early=False)
 
 
 def process(action: Text, data: Text):
@@ -163,10 +186,7 @@ def set_reminder(data):
     reminders[task] = reminder_time.isoformat()
     save_reminders(reminders)
 
-    # Schedule reminders
-    ten_minutes_before = reminder_time - timedelta(minutes=10)
-    schedule_reminder(task, ten_minutes_before.isoformat(), early=True)
-    schedule_reminder(task, reminder_time.isoformat(), early=False)
+    _schedule_reminder_notifications(task, reminder_time)
 
     return {"text": f"✅ Reminder set for '{task}' at {reminder_time.strftime('%I:%M %p')}.", "continue": False}
 
@@ -222,7 +242,7 @@ def remove_reminder(task):
         save_reminders(reminders)
 
         # ❌ Remove scheduled jobs
-        remove_reminder(matched_task)
+        remove_scheduled_reminder(matched_task)
 
         return {"text": f"✅ Removed the reminder for '{matched_task}'.", "continue": False}
     else:
@@ -256,8 +276,6 @@ def update_reminder(data):
     reminders[matched_task] = updated_time.isoformat()
     save_reminders(reminders)
 
-    # 📆 Re-schedule the reminder with dual notifications
-    schedule_reminder(matched_task, (updated_time - timedelta(minutes=10)).isoformat(), early=True)
-    schedule_reminder(matched_task, updated_time.isoformat(), early=False)
+    _schedule_reminder_notifications(matched_task, updated_time)
 
     return {"text": f"🕒 Reminder for '{matched_task}' updated to {updated_time.strftime('%I:%M %p')}.", "continue": False}
