@@ -1,0 +1,15 @@
+version: "3.1"
+
+nlu:
+  - intent: out_of_scope
+    examples: |
+      - order me a pizza
+      - book a flight to mumbai
+      - what is 2 plus 2
+      - tell me a joke
+      - who is the president of the united states
+      - what's the capital of france
+      - solve this math problem for me
+      - generate an image of a tiger
+      - translate this into german
+      - write me a poem

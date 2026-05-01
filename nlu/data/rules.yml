@@ -75,3 +75,13 @@ rules:
     steps:
       - intent: update_reminder
       - action: action_update_reminder
+
+  - rule: Handle out of scope requests
+    steps:
+      - intent: out_of_scope
+      - action: utter_out_of_scope
+
+  - rule: Handle NLU fallback
+    steps:
+      - intent: nlu_fallback
+      - action: utter_out_of_scope

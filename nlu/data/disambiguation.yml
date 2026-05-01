@@ -1,0 +1,48 @@
+version: "3.1"
+
+nlu:
+  - regex: reminder_command_prefix
+    examples: |
+      - (?i)^\s*(?:please\s+)?remind me to\b
+      - (?i)^\s*(?:can you\s+)?remind me to\b
+      - (?i)^\s*(?:can you\s+)?set a reminder(?:\s+for|\s+to)?\b
+      - (?i)^\s*set a reminder(?:\s+for|\s+to)?\b
+      - (?i)^\s*add a reminder(?:\s+for|\s+to)?\b
+      - (?i)^\s*i (?:need|want) a reminder to\b
+
+  - regex: typing_command_prefix
+    examples: |
+      - (?i)^\s*(?:please\s+)?type(?:\s+this|\s+this\s+sentence|\s+this\s+message|\s+exactly)?\b
+      - (?i)^\s*(?:please\s+)?write(?:\s+this|\s+this\s+down|\s+this\s+note)?\b
+      - (?i)^\s*(?:please\s+)?(?:enter|input|copy|dictate|transcribe)\b
+      - (?i)^\s*jot(?:\s+down)?\b
+
+  - intent: set_reminder
+    examples: |
+      - remind me to [end this video](task_name) in [5 minutes](time)
+      - remind me to [call mom](task_name) at [6 pm](time)
+      - remind me to [stop this stream](task_name) in [10 minutes](time)
+      - please remind me to [log off](task_name) at [10 pm](time)
+      - can you remind me to [check the oven](task_name) in [12 minutes](time)
+      - set a reminder to [leave the meeting](task_name) at [6:30 pm](time)
+      - add a reminder to [take a short break](task_name) in [45 minutes](time)
+      - i need a reminder to [join the call](task_name) tomorrow at [10 am](time)
+      - set a reminder for [submit the expense sheet](task_name) at [4 pm](time)
+      - remind me to [stop watching](task_name) in [5 minutes](time)
+      - remind me to [wrap this up](task_name) in [5 minutes](time)
+      - remind me to [close the laptop](task_name) in [30 minutes](time)
+
+  - intent: type_what_i_say
+    examples: |
+      - type [remind me to end this video in 5 minutes](text)
+      - write this [remind me to call mom at 6 pm](text)
+      - enter [remind me to stop this stream in 10 minutes](text)
+      - copy this [please remind me to log off at 10 pm](text)
+      - type exactly [can you remind me to check the oven in 12 minutes](text)
+      - input this [set a reminder to leave the meeting at 6:30 pm](text)
+      - dictate [add a reminder to take a short break in 45 minutes](text)
+      - transcribe [i need a reminder to join the call tomorrow at 10 am](text)
+      - write down [set a reminder for submit the expense sheet at 4 pm](text)
+      - copy [remind me to stop watching in 5 minutes](text)
+      - type this sentence [remind me to wrap this up in 5 minutes](text)
+      - write [remind me to close the laptop in 30 minutes](text)

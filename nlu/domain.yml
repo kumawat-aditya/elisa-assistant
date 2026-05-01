@@ -21,6 +21,8 @@ intents:
   - list_reminders
   - remove_reminder
   - update_reminder
+  - out_of_scope
+  - nlu_fallback
 
 entities:
   - app_name
@@ -150,6 +152,11 @@ responses:
     - text: "Why not? {query}"
     - text: "Gotcha! {query}"
     - text: "Echo mode activated: {query}"
+
+  utter_out_of_scope:
+    - text: "That request is outside what I can handle right now. Try asking me to open apps, type text, check weather, or manage reminders."
+    - text: "I don't have support for that yet. Try a reminder, weather request, app launch, or typing command."
+    - text: "That sounds outside my current skills. Rephrase it as a reminder, search, weather, app, or typing request."
 
 actions:
   - action_open_app
